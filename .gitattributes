@@ -4,3 +4,6 @@ tests/e2e/** text=auto eol=lf
 
 # Aspire writes infra/ with the OS line ending; LF in the repo keeps the CI drift check stable.
 infra/** text=auto eol=lf
+
+# Shell scripts run under bash on every OS, which rejects CRLF line endings.
+*.sh text eol=lf
