@@ -2,12 +2,15 @@
 # Container Apps jobs start asynchronously, so the deploy waits for the execution to finish and fails with it.
 set -euo pipefail
 
+# Under Git Bash on Windows, az CLI output lines end in CRLF; $(...) strips only the LF, so a captured status like "Succeeded\r" would never match the case below.
+tsv() { "$@" | tr -d '\r'; }
+
 resource_group="$1"
-execution=$(az containerapp job start --name migrations --resource-group "$resource_group" --query name --output tsv)
+execution=$(tsv az containerapp job start --name migrations --resource-group "$resource_group" --query name --output tsv)
 echo "Started migrations execution $execution"
 
 for _ in $(seq 1 60); do
-  status=$(az containerapp job execution show --name migrations --resource-group "$resource_group" \
+  status=$(tsv az containerapp job execution show --name migrations --resource-group "$resource_group" \
     --job-execution-name "$execution" --query properties.status --output tsv)
   case "$status" in
     Succeeded) echo "Migrations applied"; exit 0 ;;
