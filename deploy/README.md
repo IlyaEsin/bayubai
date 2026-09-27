@@ -2,11 +2,12 @@
 
 Production runs on Azure (West Europe). A merge to `main` deploys through `.github/workflows/deploy.yml`:
 
-1. GitHub signs in to Azure with OIDC (no stored credentials).
-2. It checks that every Key Vault secret the templates reference exists.
-3. `dotnet aspire deploy` builds the images and applies `infra/`.
-4. It runs the `migrations` job and waits for it.
-5. It uploads `client` and `studio` to Static Web Apps.
+1. Job `build-web` builds `client` and `studio` without any Azure access and hands the `dist` folders on as artifacts.
+2. Job `production` signs in to Azure with OIDC (no stored credentials).
+3. It checks that every Key Vault secret the templates reference exists.
+4. `dotnet aspire deploy` builds the images and applies `infra/`; only this step gets the database password.
+5. It runs the `migrations` job and waits for it.
+6. It uploads the `client` and `studio` artifacts to Static Web Apps.
 
 ## Resources
 

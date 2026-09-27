@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
 
 # Two deploys must never interleave; a queued one waits instead of cancelling a half-finished one.
@@ -15,11 +14,57 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  production:
+  # Third-party build code (npm packages, their install scripts) runs here, away from the Azure token and the database password.
+  build-web:
     # Off until the Azure bootstrap is done (deploy/README.md), so merges before that do not fail.
     if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
+    # Only to read the DEPLOY_DOMAIN environment variable; without id-token this job cannot sign in to Azure.
     environment: production
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Build the web apps
+        working-directory: web
+        env:
+          VITE_API_BASE_URL: https://api.${{ vars.DEPLOY_DOMAIN }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-client
+          path: web/apps/client/dist
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-studio
+          path: web/apps/studio/dist
+          if-no-files-found: error
+
+  production:
+    if: vars.DEPLOY_ENABLED == 'true'
+    needs: build-web
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
     timeout-minutes: 45
     env:
       Azure__SubscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -44,17 +89,20 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      # The password lives only in Key Vault; the deploy reads it with its federated identity instead of a GitHub secret.
+      # The password lives only in Key Vault and leaves this step as an output, not GITHUB_ENV, so only the deploy step sees it.
       - name: Read the database password
+        id: postgres
         run: |
           password=$(az keyvault secret show --vault-name "$Deploy__KeyVault" --name postgres-password --query value --output tsv)
           echo "::add-mask::$password"
-          echo "Deploy__PostgresPassword=$password" >> "$GITHUB_ENV"
+          echo "password=$password" >> "$GITHUB_OUTPUT"
 
       - name: Every Key Vault secret the templates reference exists
         run: bash deploy/check-secrets.sh "$Deploy__KeyVault"
 
       - name: Deploy the API, the migrations job and Azure resources
+        env:
+          Deploy__PostgresPassword: ${{ steps.postgres.outputs.password }}
         run: |
           az bicep install
           dotnet tool restore
@@ -63,23 +111,15 @@ jobs:
       - name: Apply database migrations
         run: bash deploy/run-migrations.sh "$Azure__ResourceGroup"
 
-      - uses: pnpm/action-setup@v4
+      - uses: actions/download-artifact@v4
         with:
-          package_json_file: web/package.json
+          name: web-client
+          path: web/apps/client/dist
 
-      - uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
         with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      - name: Build the web apps
-        working-directory: web
-        env:
-          VITE_API_BASE_URL: https://api.${{ vars.DEPLOY_DOMAIN }}
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build
+          name: web-studio
+          path: web/apps/studio/dist
 
       # Deployment tokens are fetched per run, so no Static Web Apps token is stored in GitHub.
       - name: Read the Static Web Apps deployment tokens
