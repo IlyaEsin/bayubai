@@ -18,6 +18,9 @@ Platform that automates an independent consultant's work with parents; the first
 - Web (from `web/`): `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`
 - After an intended API contract change: `CARENEST_UPDATE_OPENAPI=1 dotnet test tests/CareNest.Api.IntegrationTests`, then `pnpm generate:api` in `web/`; commit both
 - E2E (from `tests/e2e/`): `pnpm test` (starts the AppHost unless it is running), `pnpm walkthrough` for a visible demo
+- How-to-test scenario for an issue (from `tests/e2e/`): `pnpm how-to-test cn-<n>` (skill `how-to-test`)
+- After changing the AppHost's Azure model: `dotnet tool restore`, `dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`; commit `infra/`
+- Deploy: merge to `main` (`.github/workflows/deploy.yml`); setup, secrets, providers and domains: `deploy/README.md`
 - New Identity migration: `dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output-dir Persistence/Migrations --namespace CareNest.Identity.Persistence.Migrations`
 - Try the API in a browser (Development): `<api>/scalar`; scripted scenario: `src/CareNest.Api/CareNest.Api.http`
 
@@ -28,6 +31,7 @@ Platform that automates an independent consultant's work with parents; the first
 - `src/Modules/CareNest.<Module>` is one project per module. Only types in the module's root namespace are public (the `<Module>Module` entry point and contracts); everything else is `internal`. Modules never reference each other; a cross-module call goes through a public interface in the callee's root namespace. Architecture tests enforce this.
 - Each module owns one PostgreSQL schema and one DbContext with its own migrations.
 - Migrations never run at API startup: `CareNest.MigrationService` applies them locally, a deploy step applies them in production.
+- `src/CareNest.AppHost`: `LocalStack.cs` is the local run, `AzureDeployment.cs` the production model; `infra/` is its generated Bicep (never edit by hand); `deploy/` holds the bootstrap and deploy scripts.
 - `web/packages/api-client` is generated from `openapi.json` (never edit `src/generated/`), `web/packages/i18n` holds every UI string, `web/packages/ui` holds shared components and flows; `web/apps/client` (parent PWA) and `web/apps/studio` (consultant and admin) hold routes and app-specific screens only.
 
 ## Standing rules (checked in review)
@@ -49,3 +53,5 @@ Platform that automates an independent consultant's work with parents; the first
 - Every endpoint gets `.WithName("<Operation>")`: it becomes the generated hook name (`useGetMe`).
 - A new error code needs RU and EN text in `web/packages/i18n/src/locales/*/errors.json`; a test fails otherwise.
 - Times in the UI: `formatDateTime` in the viewer's profile zone; another person's local time with `formatLocalTime` in their zone, labelled with the zone id.
+- Review: `REVIEW.md` is the checklist for every PR; the `build-test` skill picks the checks for what changed.
+- Migrations run after the new API revision is live, so they must be backward compatible (see `REVIEW.md`).
