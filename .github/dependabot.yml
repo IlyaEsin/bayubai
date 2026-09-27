@@ -1,8 +1,8 @@
 version: 2
 updates:
-  # Dependabot does not read .slnx, so every project directory is listed.
+  # Dependabot does not read .slnx, so every project directory is listed; "/" adds .config/dotnet-tools.json so the Aspire CLI moves with the Aspire packages.
   - package-ecosystem: nuget
-    directories: ["/src/*", "/src/Modules/*", "/tests/*"]
+    directories: ["/", "/src/*", "/src/Modules/*", "/tests/*"]
     schedule:
       interval: weekly
     groups:

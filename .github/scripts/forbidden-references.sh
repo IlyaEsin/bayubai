@@ -12,15 +12,26 @@ trap 'rm -f "$patterns"' EXIT
 printf '%s\n' "$FORBIDDEN_REFERENCES" | sed '/^[[:space:]]*$/d' > "$patterns"
 
 found=0
-# Only file names and counts are printed: the matching lines would publish the names.
-if git grep -I -i -c -E -f "$patterns" -- .; then
+# Only file names and counts are printed: the matching lines would publish the names; stderr is dropped because git and grep quote a bad pattern there.
+if git grep -I -i -c -E -f "$patterns" -- . 2>/dev/null; then
   found=1
+else
+  status=$?
+  if [ "$status" -ne 1 ]; then
+    echo "git grep failed (exit $status); check that every FORBIDDEN_REFERENCES line is a valid extended regex"
+    exit 2
+  fi
 fi
 
-history=$(git log --format='%an%n%ae%n%cn%n%ce%n%B' | grep -i -c -E -f "$patterns" || true)
-if [ "${history:-0}" -gt 0 ]; then
+if history=$(git log --format='%an%n%ae%n%cn%n%ce%n%B' | grep -i -c -E -f "$patterns" 2>/dev/null); then
   echo "commit metadata or messages: $history matching lines"
   found=1
+else
+  status=$?
+  if [ "$status" -ne 1 ]; then
+    echo "grep over the history failed (exit $status); check that every FORBIDDEN_REFERENCES line is a valid extended regex"
+    exit 2
+  fi
 fi
 
 if [ "$found" -eq 1 ]; then

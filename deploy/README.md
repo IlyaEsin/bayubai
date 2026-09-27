@@ -53,7 +53,7 @@ The order matters: a referenced secret that does not exist stops the deploy at t
 
 ## API custom domain
 
-The binding needs DNS records that can only point at the app after the first deploy, so it is switched on in three phases:
+The binding needs DNS records that can only point at the app after the first deploy, so it is switched on in five steps:
 
 1. `az containerapp show --name api --resource-group rg-carenest --query "{fqdn: properties.configuration.ingress.fqdn, verification: properties.customDomainVerificationId}"`.
 2. At the registrar:
@@ -71,6 +71,10 @@ The binding needs DNS records that can only point at the app after the first dep
 Static Web Apps domains:
 - `CNAME app` pointing at `cn-client`'s default hostname, `CNAME studio` pointing at `cn-studio`'s (`az staticwebapp show --name cn-client --resource-group rg-carenest --query defaultHostname --output tsv`);
 - then `az staticwebapp hostname set --name cn-client --resource-group rg-carenest --hostname app.<domain>`, and the same for `studio`.
+
+## Aspire version bumps
+
+An Aspire version bump (the `Aspire.Hosting.*` packages or the `aspire.cli` tool) needs `infra/` regenerated in the same PR, or the drift check in the backend workflow fails.
 
 ## Rollback
 

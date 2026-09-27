@@ -41,14 +41,15 @@ az role assignment create --assignee-object-id "$me" --assignee-principal-type U
 
 # A new role assignment can take a few minutes to apply, so the first secret write is retried.
 set_secret() {
-  local name="$1" value="$2"
+  local name="$1" value="$2" error=""
   for _ in $(seq 1 30); do
-    if az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" --output none 2>/dev/null; then
+    # The last error is kept so a lasting permission or network failure is visible.
+    if error=$(az keyvault secret set --vault-name "$vault" --name "$name" --value "$value" --output none 2>&1); then
       return 0
     fi
     sleep 10
   done
-  echo "Could not write secret $name"
+  echo "Could not write secret $name: $error"
   return 1
 }
 
@@ -58,9 +59,17 @@ ask_secret() {
     echo "Secret $name already set"
     return 0
   fi
-  read -r -s -p "$prompt: " value
-  echo
-  set_secret "$name" "$value"
+  for _ in 1 2 3; do
+    read -r -s -p "$prompt: " value
+    echo
+    if [ -n "$value" ]; then
+      set_secret "$name" "$value"
+      return
+    fi
+    echo "The value cannot be empty"
+  done
+  echo "No value entered for $name"
+  return 1
 }
 
 echo "== Secrets"
