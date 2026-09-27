@@ -359,7 +359,21 @@ YouTube (EN): `Tailwind CSS v4 crash course`, `shadcn ui tutorial`, `MSW mock se
 Официальная документация: https://vite.dev/guide/, https://react.dev/, https://tanstack.com/router/latest/docs, https://tanstack.com/query/latest/docs, https://vite-pwa-org.netlify.app/guide/
 YouTube (EN): `TanStack Router tutorial`, `TanStack Query v5 tutorial`, `vite-plugin-pwa tutorial`
 
-## 18. Что почитать и посмотреть
+## 18. API в продакшене
+
+Несколько настроек, без которых API работает локально, но ломается за балансировщиком или при перезапуске. Они не зависят от Azure: на любом хостинге за TLS-прокси работают так же.
+
+- **Forwarded headers.** В Azure Container Apps HTTPS заканчивается на входном прокси (ingress), а в контейнер запрос приходит по обычному http. Без `UseForwardedHeaders` API считал бы, что запрос пришёл по http, и, например, отдавал бы Google адрес возврата `http://...`, который провайдер отвергает. Прокси сообщает исходную схему и адрес клиента в заголовках `X-Forwarded-Proto` и `X-Forwarded-For`; `src/CareNest.Api/Program.cs` им доверяет, потому что снаружи к контейнеру можно попасть только через ingress. Заголовок `Host` от прокси не принимается, чтобы его нельзя было подменить.
+- **Ключи Data Protection в базе.** ASP.NET Core шифрует cookie сессии и состояние OAuth ключами Data Protection. По умолчанию ключи живут в файловой системе контейнера и пропадают при каждом перезапуске - всех бы разлогинивало. У нас ключи лежат в таблице `identity.data_protection_keys` (пакет `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) и общие для всех реплик. У Container Apps есть своё хранилище ключей, и Aspire его включает, но явно настроенное хранилище приложения имеет приоритет (проверено по исходникам ASP.NET Core 10), так что источник один - база.
+- **`/alive`.** Проверка "процесс жив": Container Apps вызывает её каждые несколько секунд и при сбоях перезапускает контейнер. Отвечает только `Healthy`, поэтому открыта везде; подробный `/health` - только в Development.
+- **Проверка конфигурации при старте.** Если `Frontend:Origins` или `Frontend:ClientAppUrl` пустые или не абсолютные адреса, API не стартует (`ValidateOnStart`), а не ломает молча CORS и ссылки в письмах.
+- **Тестовый вход только локально.** Тестовый провайдер входа разрешён только в окружениях `Development` и `Testing`; в любом другом (Production, Staging) API с ним не стартует.
+- **Application Insights.** Экспортер Azure Monitor подключён в `CareNest.ServiceDefaults` и включается, только если задана переменная `APPLICATIONINSIGHTS_CONNECTION_STRING` (её задаёт деплой в Azure). Архитектурный тест следит, чтобы модули, SharedKernel и API не использовали Azure SDK: переезд на другой хостинг - это смена конфигурации, а не кода.
+
+Официальная документация: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer, https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers
+YouTube (EN): `ASP.NET Core data protection keys explained`
+
+## 19. Что почитать и посмотреть
 
 **.NET 10 / ASP.NET Core / Minimal API**
 - https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis

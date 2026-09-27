@@ -75,6 +75,18 @@ public class ArchitectureTests
         }
     }
 
+    [Fact]
+    public void Host_kernel_and_modules_use_no_Azure_SDK()
+    {
+        // Portability: Azure reaches the app only as configuration, so a move to another host is a redeploy.
+        foreach (var assembly in Modules.Append(SharedKernel).Append(Host))
+        {
+            var result = Types.InAssembly(assembly).ShouldNot().HaveDependencyOnAny("Azure", "Microsoft.Azure").GetResult();
+
+            result.IsSuccessful.ShouldBeTrue(Describe(result));
+        }
+    }
+
     private static string Describe(NetArchTest.Rules.TestResult result) =>
         "Violations: " + string.Join(", ", result.FailingTypeNames ?? []);
 }

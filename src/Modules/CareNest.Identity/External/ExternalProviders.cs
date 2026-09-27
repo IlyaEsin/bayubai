@@ -18,6 +18,7 @@ internal static class ExternalProviders
     public const string VkId = "VkId";
     public const string Fake = "Fake";
     public const string Telegram = "Telegram";
+    public const string TestingEnvironment = "Testing";
 
     public const string ReturnUrlItem = "cn.returnUrl";
     public const string ModeItem = "cn.mode";
@@ -48,9 +49,10 @@ internal static class ExternalProviders
 
         if (configuration.GetValue<bool>($"{IdentityModuleOptions.Section}:Providers:{Fake}:Enabled"))
         {
-            if (environment.IsProduction())
+            // An allow-list, so a staging or any other deployed environment cannot get the test sign-in by a stray setting.
+            if (!environment.IsDevelopment() && !environment.IsEnvironment(TestingEnvironment))
             {
-                throw new InvalidOperationException("The fake sign-in provider must never be enabled in Production.");
+                throw new InvalidOperationException("The fake sign-in provider is allowed only in Development and Testing.");
             }
 
             authentication.AddRemoteScheme<FakeOAuthOptions, FakeOAuthHandler>(Fake, Fake, ConfigureRemote);

@@ -1,5 +1,6 @@
 using CareNest.Identity.Domain;
 using CareNest.SharedKernel.Consultants;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace CareNest.Identity.Persistence;
 internal sealed class IdentityModuleDbContext(
     DbContextOptions<IdentityModuleDbContext> options,
     ICurrentConsultant currentConsultant)
-    : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IConsultantScopedDbContext
+    : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options), IConsultantScopedDbContext, IDataProtectionKeyContext
 {
     public const string Schema = "identity";
 
@@ -22,6 +23,8 @@ internal sealed class IdentityModuleDbContext(
     public DbSet<Invitation> Invitations => Set<Invitation>();
 
     public DbSet<ClientLink> ClientLinks => Set<ClientLink>();
+
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql) =>
         npgsql.UseNodaTime().MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schema);
@@ -69,6 +72,8 @@ internal sealed class IdentityModuleDbContext(
             link.HasOne<User>().WithMany().HasForeignKey(l => l.ConsultantId).OnDelete(DeleteBehavior.Cascade);
             link.HasOne<User>().WithMany().HasForeignKey(l => l.ParentUserId).OnDelete(DeleteBehavior.Cascade);
         });
+
+        builder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
 
         builder.ApplyConsultantQueryFilters(this);
     }

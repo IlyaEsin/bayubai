@@ -9,15 +9,19 @@ namespace CareNest.Identity.Tests;
 
 public class ExternalProvidersTests
 {
-    [Fact]
-    public void Fake_provider_refuses_to_register_in_production() =>
-        Should.Throw<InvalidOperationException>(() => Register(fakeEnabled: true, Environments.Production));
+    [Theory]
+    [InlineData("Production")]
+    [InlineData("Staging")]
+    public void Fake_provider_refuses_to_register_in_a_deployed_environment(string environmentName) =>
+        Should.Throw<InvalidOperationException>(() => Register(fakeEnabled: true, environmentName));
 
-    [Fact]
-    public async Task Fake_provider_registers_outside_production_only_when_enabled()
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Testing")]
+    public async Task Fake_provider_registers_locally_only_when_enabled(string environmentName)
     {
-        (await SchemeAsync(Register(fakeEnabled: true, Environments.Development))).ShouldNotBeNull();
-        (await SchemeAsync(Register(fakeEnabled: false, Environments.Development))).ShouldBeNull();
+        (await SchemeAsync(Register(fakeEnabled: true, environmentName))).ShouldNotBeNull();
+        (await SchemeAsync(Register(fakeEnabled: false, environmentName))).ShouldBeNull();
     }
 
     private static IServiceCollection Register(bool fakeEnabled, string environmentName)

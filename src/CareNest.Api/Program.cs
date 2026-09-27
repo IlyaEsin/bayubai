@@ -1,6 +1,7 @@
 using CareNest.Api;
 using CareNest.Identity;
 using CareNest.SharedKernel.Web;
+using Microsoft.AspNetCore.HttpOverrides;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Scalar.AspNetCore;
@@ -15,12 +16,20 @@ builder.Services.AddOpenApi(options => options
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddCors();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    // The Container Apps ingress terminates TLS and is the only way in, so its scheme and client address are trusted; Host is not forwarded.
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.AddIdentityModule();
 
 var app = builder.Build();
 
 var frontend = app.Configuration.GetSection(FrontendOptions.Section).Get<FrontendOptions>() ?? new FrontendOptions();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(policy => policy.WithOrigins(frontend.Origins).AllowCredentials().AllowAnyHeader().AllowAnyMethod());

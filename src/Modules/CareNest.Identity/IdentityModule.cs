@@ -9,6 +9,7 @@ using CareNest.SharedKernel.Consultants;
 using CareNest.SharedKernel.Web;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
@@ -31,10 +32,18 @@ public static class IdentityModule
     {
         var services = builder.Services;
         services.AddOptions<IdentityModuleOptions>().Bind(builder.Configuration.GetSection(IdentityModuleOptions.Section));
-        services.AddOptions<FrontendOptions>().Bind(builder.Configuration.GetSection(FrontendOptions.Section));
+        services.AddOptions<FrontendOptions>()
+            .Bind(builder.Configuration.GetSection(FrontendOptions.Section))
+            .Validate(frontend => frontend.IsValid(), "Frontend:Origins and Frontend:ClientAppUrl must be absolute http(s) URLs.")
+            .ValidateOnStart();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentConsultant, HttpCurrentConsultant>();
         builder.AddIdentityPersistence();
+
+        // Keys live in the database so sessions and OAuth state survive restarts and are shared by every replica; an explicit store also wins over the Container Apps one.
+        services.AddDataProtection()
+            .SetApplicationName("CareNest")
+            .PersistKeysToDbContext<IdentityModuleDbContext>();
 
         services.AddIdentityCore<User>()
             .AddRoles<IdentityRole<Guid>>()
