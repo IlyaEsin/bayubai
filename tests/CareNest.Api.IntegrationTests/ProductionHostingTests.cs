@@ -68,4 +68,44 @@ public class ProductionHostingTests(ApiFactory factory)
         (await StartAsync()).StatusCode.ShouldBe(HttpStatusCode.Accepted);
         await (await StartAsync()).ShouldBeProblemAsync(HttpStatusCode.TooManyRequests, "rate_limited");
     }
+
+    [Fact]
+    public async Task Email_start_limit_keys_on_the_ingress_appended_address_when_the_host_enables_forwarded_headers()
+    {
+        // Azure sets ASPNETCORE_FORWARDEDHEADERS_ENABLED, so the host itself also processes forwarded headers.
+        await using var limited = factory.WithWebHostBuilder(builder => builder
+            .UseSetting("ForwardedHeaders_Enabled", "true")
+            .UseSetting("Identity:EmailStartsPerAddressWindow", "2"));
+        var client = limited.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        Task<HttpResponseMessage> StartAsync(string forwardedFor)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/identity/email/start")
+            {
+                Content = JsonContent.Create(new { email = NewEmail(), callbackUrl = EmailCallbackUrl, language = "en", timeZone = "UTC" }),
+            };
+            request.Headers.Add("X-Forwarded-For", forwardedFor);
+            return client.SendAsync(request);
+        }
+
+        // The left entries are client-supplied; the ingress appends the real address on the right.
+        (await StartAsync("198.51.100.1, 203.0.113.7")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        (await StartAsync("198.51.100.2, 203.0.113.7")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        await (await StartAsync("198.51.100.3, 203.0.113.7")).ShouldBeProblemAsync(HttpStatusCode.TooManyRequests, "rate_limited");
+        (await StartAsync("203.0.113.8")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+    }
+
+    [Fact]
+    public async Task Forwarded_https_scheme_reaches_the_oauth_redirect_uri_when_the_host_enables_forwarded_headers()
+    {
+        await using var forwarded = factory.WithWebHostBuilder(builder => builder.UseSetting("ForwardedHeaders_Enabled", "true"));
+        var client = forwarded.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("http://localhost"), AllowAutoRedirect = false });
+        using var request = new HttpRequestMessage(HttpMethod.Get,
+            $"/api/identity/external/Google/start?returnUrl={Uri.EscapeDataString(ApiFactory.ClientAppUrl + "/")}&mode=signin&language=en&timeZone=UTC");
+        request.Headers.Add("X-Forwarded-Proto", "https");
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        response.Headers.Location!.Query.ShouldContain("redirect_uri=https%3A%2F%2Flocalhost%2Fapi%2Fidentity%2Fsignin-google");
+    }
 }

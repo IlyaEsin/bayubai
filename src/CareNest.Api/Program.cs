@@ -35,7 +35,12 @@ var app = builder.Build();
 
 var frontend = app.Configuration.GetSection(FrontendOptions.Section).Get<FrontendOptions>() ?? new FrontendOptions();
 
-app.UseForwardedHeaders();
+if (!app.Configuration.GetValue<bool>("ForwardedHeaders_Enabled"))
+{
+    // With ASPNETCORE_FORWARDEDHEADERS_ENABLED the host already runs this middleware, and a second pass would trust a client-supplied X-Forwarded-For entry.
+    app.UseForwardedHeaders();
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(policy => policy.WithOrigins(frontend.Origins).AllowCredentials().AllowAnyHeader().AllowAnyMethod());
