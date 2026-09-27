@@ -100,7 +100,7 @@ Own authentication on ASP.NET Core Identity with a password-less user store. Man
 | Yandex ID | OAuth 2.0 (`AspNet.Security.OAuth.Providers`) |
 | VK ID | OAuth 2.1 with PKCE; package compatibility with the current VK ID API is verified during planning, otherwise a custom handler |
 | Telegram | Login Widget; payload verified by HMAC with the bot token. Mini App `initData` verification comes in sub-project 5 |
-| Email | One-time magic link, valid 15 minutes, single use; sent via Azure Communication Services Email (Mailpit locally) |
+| Email | One-time magic link, valid 15 minutes, single use; sent over SMTP via Brevo (Mailpit locally); Azure Communication Services Email was dropped because Microsoft retires it on 30 September 2028 |
 
 No paid methods (SMS, WhatsApp) and no Apple sign-in.
 
@@ -181,7 +181,7 @@ A user can delete their account. Deletion removes the user, their sign-in method
   - account deletion covers all personal data.
 - **Tracking:** GitHub Issues. An issue `#12` is keyed `cn-12` in branches (`feature/cn-12-...`) and in spec and plan file names (`docs/superpowers/specs/cn-12-<description>.md`). Documents without an issue use `<description>.md`.
 - **`build-test` skill:** backend `dotnet build` / `dotnet test` and frontend `pnpm lint` / `typecheck` / `test`, scoped to what changed.
-- **`how-to-test` skill:** Playwright scenarios per issue in `tests/how-to-test/cn-<n>/`, run output gitignored.
+- **`how-to-test` skill:** Playwright scenarios per issue in `tests/e2e/how-to-test/cn-<n>/` (inside the e2e project, so the scenarios reuse its Playwright install and helpers), run output gitignored.
 - **`REVIEW.md`:** project review checklist (the standing rules above plus module boundaries and migration safety).
 
 ### CI (GitHub Actions, every PR)
@@ -200,19 +200,19 @@ A user can delete their account. Deletion removes the user, their sign-in method
 
 - **Runtime:** Azure Container Apps for the API, Azure Database for PostgreSQL Flexible Server (Burstable B1ms), Azure Static Web Apps for both frontends, EU region.
 - **Pipeline:**
-  - A merge to `main` deploys to production via `azd`.
+  - A merge to `main` deploys to production via `aspire deploy` (Aspire 13 no longer recommends azd); `infra/` is the committed output of `aspire publish`.
   - No staging environment initially.
-  - Static Web Apps provides free per-PR preview environments for the frontends.
-  - Database migrations run as a separate deploy step (EF migration bundle), never at application startup.
+  - Static Web Apps preview environments are not used: they live on `*.azurestaticapps.net`, a different site from `api.<domain>`, so sign-in cannot work there.
+  - Database migrations run as a separate deploy step (the MigrationService image as a Container Apps job the deploy workflow starts and waits for; migrations must be backward compatible because they run after the new API revision), never at application startup.
 - **Secrets and access:**
   - GitHub authenticates to Azure with OIDC federated credentials; no Azure secrets in GitHub.
   - Application secrets (OAuth client secrets, bot token) live in Key Vault, read by Container Apps via managed identity.
   - Locally they live in .NET user-secrets.
   - GitHub secret-scanning push protection is enabled.
-- **Operations:** automatic PostgreSQL backups with 7-day retention; an Azure budget alert at 30 USD per month.
+- **Operations:** automatic PostgreSQL backups with 7-day retention; an Azure budget alert at 40 USD per month (the API keeps one warm replica; about 31 USD per month in total).
 - **Portability:** everything runs in containers, so moving to a Russian VPS (if Russian data-residency law or reachability from Russia becomes a problem) is a redeploy, not a rewrite. To keep it that way, application code uses no Azure SDK, only standard interfaces:
   - secrets reach the app as configuration (environment variables filled from Key Vault references by Container Apps), never through a Key Vault client in code;
-  - email goes over SMTP (Azure Communication Services SMTP relay in production), so another provider is a settings change;
+  - email goes over SMTP (Brevo SMTP relay in production), so another provider is a settings change;
   - telemetry goes through OpenTelemetry; the Azure Monitor exporter is switched on only in `CareNest.ServiceDefaults` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set;
   - Azure-specific parts live only in the AppHost publish model, `infra/` and the deploy workflow. An architecture test fails if a module, SharedKernel or the API references an `Azure.*` package.
 
@@ -227,10 +227,9 @@ A user can delete their account. Deletion removes the user, their sign-in method
 7. The parent app installs as a PWA on Android and iOS and respects the system dark theme.
 8. Account deletion removes the user and all their links; a test covers it.
 9. All CI checks in section 7 run on every PR and block merge on failure.
-10. The production deploy is reproducible from `main` with `azd`, and the budget alert exists.
+10. The production deploy is reproducible from `main` with `aspire deploy`, and the budget alert exists.
 
 ## 9. Open items for planning
 
-- Verify `AspNet.Security.OAuth.Providers` against the current VK ID API; fall back to a custom handler.
-- Choose and buy the domain.
-- Confirm Static Web Apps with a custom domain on the free tier supports the cookie layout in section 5.
+- Resolved in plan 1: `AspNet.Security.OAuth.VkId` 10.0.0 works with the current VK ID API.
+- Resolved in plan 3: the domain is bought during delivery (Task 7). Free Static Web Apps with custom domains works with the cookie layout because the session cookie is host-only on `api.<domain>` and `app.`/`studio.` are the same site.

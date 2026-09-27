@@ -1,0 +1,110 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+# Two deploys must never interleave; a queued one waits instead of cancelling a half-finished one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  production:
+    # Off until the Azure bootstrap is done (deploy/README.md), so merges before that do not fail.
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    env:
+      Azure__SubscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      Azure__TenantId: ${{ vars.AZURE_TENANT_ID }}
+      Azure__ResourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+      Azure__Location: westeurope
+      Azure__CredentialSource: AzureCli
+      Deploy__Domain: ${{ vars.DEPLOY_DOMAIN }}
+      Deploy__ApiHost: api.${{ vars.DEPLOY_DOMAIN }}
+      Deploy__ApiCertificate: ${{ vars.DEPLOY_API_CERTIFICATE }}
+      Deploy__KeyVault: ${{ vars.DEPLOY_KEY_VAULT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # The password lives only in Key Vault; the deploy reads it with its federated identity instead of a GitHub secret.
+      - name: Read the database password
+        run: |
+          password=$(az keyvault secret show --vault-name "$Deploy__KeyVault" --name postgres-password --query value --output tsv)
+          echo "::add-mask::$password"
+          echo "Deploy__PostgresPassword=$password" >> "$GITHUB_ENV"
+
+      - name: Every Key Vault secret the templates reference exists
+        run: bash deploy/check-secrets.sh "$Deploy__KeyVault"
+
+      - name: Deploy the API, the migrations job and Azure resources
+        run: |
+          az bicep install
+          dotnet tool restore
+          dotnet aspire deploy --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --non-interactive --nologo
+
+      - name: Apply database migrations
+        run: bash deploy/run-migrations.sh "$Azure__ResourceGroup"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Build the web apps
+        working-directory: web
+        env:
+          VITE_API_BASE_URL: https://api.${{ vars.DEPLOY_DOMAIN }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      # Deployment tokens are fetched per run, so no Static Web Apps token is stored in GitHub.
+      - name: Read the Static Web Apps deployment tokens
+        id: swa
+        run: |
+          for app in client studio; do
+            token=$(az staticwebapp secrets list --name "cn-$app" --resource-group "$Azure__ResourceGroup" --query properties.apiKey --output tsv)
+            echo "::add-mask::$token"
+            echo "$app=$token" >> "$GITHUB_OUTPUT"
+          done
+
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.client }}
+          action: upload
+          app_location: web/apps/client/dist
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
+
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.studio }}
+          action: upload
+          app_location: web/apps/studio/dist
+          output_location: ''
+          skip_app_build: true
+          skip_api_build: true
