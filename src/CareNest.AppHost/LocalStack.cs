@@ -20,7 +20,9 @@ internal static class LocalStack
             .WaitFor(database)
             .WaitForCompletion(migrations)
             .WithEnvironment("Identity__Providers__Fake__Enabled", "true")
-            .WithEnvironment("Identity__AdminEmails__99", "admin@carenest.local");
+            .WithEnvironment("Identity__AdminEmails__99", "admin@carenest.local")
+            // Behind the Vite proxy every request comes from 127.0.0.1, so back-to-back e2e runs would hit the per-address limit.
+            .WithEnvironment("Identity__EmailStartsPerAddressWindow", "100000");
 
         // Ports match Frontend:Origins in the API's appsettings.Development.json.
         var client = builder.AddViteApp("client", "../../web/apps/client")
