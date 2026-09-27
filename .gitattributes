@@ -1,3 +1,6 @@
 # Generated web files (orval output, the OpenAPI snapshot, the route tree) are LF on every OS, so drift checks compare like with like.
 web/** text=auto eol=lf
 tests/e2e/** text=auto eol=lf
+
+# Aspire writes infra/ with the OS line ending; LF in the repo keeps the CI drift check stable.
+infra/** text=auto eol=lf

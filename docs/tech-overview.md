@@ -47,6 +47,8 @@ web/
 tests/e2e/          сценарии Playwright (они же живая демонстрация)
 ```
 
+Деплой: `infra/` - Bicep, сгенерированный из модели Aspire (`aspire publish`), коммитится и проверяется в CI; `deploy/` - скрипты разовой подготовки Azure и шагов деплоя (раздел 16).
+
 ## 3. .NET 10 - почему именно 10
 
 .NET 10 - LTS-версия (Long Term Support), то есть версия с длительной поддержкой Microsoft. Это важно: LTS-версии получают обновления безопасности дольше, чем обычные (STS) релизы, и на них можно спокойно строить продукт на годы вперёд, не переезжая каждый год на новую версию.
@@ -99,7 +101,7 @@ PostgreSQL - open source реляционная СУБД. Мы выбрали е
 dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output-dir Persistence/Migrations --namespace CareNest.Identity.Persistence.Migrations
 ```
 
-**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`CareNest.MigrationService`** (`src/CareNest.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `CareNest.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/CareNest.AppHost/AppHost.cs`) перед стартом `CareNest.Api`; при деплое в Azure миграции точно так же будут отдельным шагом (раздел 16).
+**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`CareNest.MigrationService`** (`src/CareNest.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `CareNest.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/CareNest.AppHost/AppHost.cs`) перед стартом `CareNest.Api`; при деплое в Azure это задание (job) Container Apps `migrations`, которое workflow деплоя запускает и дожидается (раздел 16).
 
 ## 7. NodaTime
 
@@ -234,6 +236,14 @@ dotnet run --project src/CareNest.AppHost
 После запуска открывается **Aspire-дашборд** в браузере - там видно список всех запущенных ресурсов, их логи в реальном времени, распределённые трассировки запросов (через OpenTelemetry - см. `CareNest.ServiceDefaults`) и метрики.
 
 Чем это удобнее docker-compose: docker-compose описывает только контейнеры и их сети, а Aspire ещё и умеет управлять процессами .NET напрямую (без обёртывания в Docker), автоматически прокидывает connection string'и и адреса сервисов друг другу через переменные окружения, и даёт единый экран для логов/трейсов сразу для контейнеров и .NET-процессов вместе - не нужно параллельно смотреть `docker logs` и консоль `dotnet run`.
+
+### Публикация в Azure
+
+У AppHost две модели. При `dotnet run` работает локальная (`LocalStack.cs`): контейнеры, Mailpit, Vite. При `aspire publish` и `aspire deploy` - азурная (`AzureDeployment.cs`): Container Apps, PostgreSQL Flexible Server, Key Vault, Application Insights и два Static Web Apps (раздел 16). `aspire publish` превращает модель в Bicep (декларативный язык описания ресурсов Azure) в папке `infra/`; этот вывод коммитится, чтобы изменение инфраструктуры было видно в pull request, а CI проверяет, что `infra/` совпадает с моделью. Настройки, от которых зависит модель, лежат в `src/CareNest.AppHost/appsettings.json` (раздел `Deploy`), а не в переменных окружения, поэтому `infra/` определяется только закоммиченными файлами.
+
+Aspire CLI закреплён как локальный инструмент (`.config/dotnet-tools.json`): `dotnet tool restore`, затем `dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`.
+
+Официальная документация: https://aspire.dev/deployment/azure/
 
 ## 12. Mailpit
 
