@@ -292,11 +292,21 @@ GitHub Actions workflow `.github/workflows/backend.yml` запускается �
 4. `dotnet build CareNest.slnx --no-restore --configuration Release` - собирает решение в конфигурации Release.
 5. `dotnet test CareNest.slnx --no-build --configuration Release` - прогоняет все тесты решения (unit, интеграционные через Testcontainers и архитектурные).
 
-`main` защищён: изменения попадают туда только через pull request с зелёным CI.
+В backend-workflow есть ещё шаг "Committed infra matches the Azure model": он заново генерирует `infra/` из модели Aspire и падает, если результат отличается от закоммиченного (раздел 11).
 
-Ещё два workflow:
+Ещё четыре workflow:
 - `.github/workflows/frontend.yml` - в `web/`: `pnpm install --frozen-lockfile`, линтер, проверка типов, тесты Vitest (включая проверку одинаковых ключей RU/EN и перевода каждого кода ошибки), сборка обоих приложений, проверка, что сборка не изменила закоммиченные `routeTree.gen.ts` (их генерирует плагин TanStack Router при сборке - расхождение означает, что дерево маршрутов забыли перегенерировать и закоммитить), и проверка, что сгенерированный клиент API совпадает с `openapi.json`. Вместе с тестом `OpenApiContractTests` в backend-workflow это даёт цепочку "код API -> openapi.json -> клиент".
 - `.github/workflows/e2e.yml` - ставит .NET, Node, pnpm и Chromium, доверяет dev-сертификату и запускает сценарии Playwright; Playwright сам поднимает весь стек через Aspire AppHost (Docker на раннерах GitHub есть). При падении отчёт Playwright прикладывается к запуску.
+- `.github/workflows/hygiene.yml` - две проверки гигиены. **gitleaks** ищет в файлах и во всей истории git то, что похоже на секреты (ключи, токены, пароли). Проверка запрещённых имён ищет в файлах, в сообщениях коммитов и в именах авторов имена, которых не должно быть в публичном репозитории; сам список лежит в секрете репозитория `FORBIDDEN_REFERENCES`, а в лог попадают только имена файлов и число совпадений, чтобы список не утёк через лог.
+- `.github/workflows/deploy.yml` - деплой в Azure после каждого merge в `main` (раздел 16); включается переменной репозитория `DEPLOY_ENABLED`.
+
+Кроме workflow:
+- **CodeQL** - статический анализ кода на уязвимости от GitHub (C#, TypeScript, сами workflow). Включён как "default setup" в настройках репозитория, отдельного файла нет; находки видны во вкладке Security.
+- **Dependabot** (`.github/dependabot.yml`) - раз в неделю открывает pull request'ы с обновлениями NuGet-, npm-пакетов и GitHub Actions, сгруппированные по экосистеме.
+- **Push protection** - GitHub отклоняет push, в котором распознал секрет, ещё до того, как он попадёт в репозиторий.
+
+Официальная документация: https://github.com/gitleaks/gitleaks, https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning, https://docs.github.com/en/code-security/dependabot, https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations
+YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependabot tutorial`
 
 ## 16. Azure и деплой
 
