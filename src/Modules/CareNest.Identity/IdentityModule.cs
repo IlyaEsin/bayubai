@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using CareNest.Identity.Accounts;
 using CareNest.Identity.Domain;
 using CareNest.Identity.Email;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -72,6 +74,15 @@ public static class IdentityModule
             .PostConfigure<IConfiguration>((email, configuration) =>
                 email.ApplyConnectionString(configuration.GetConnectionString(EmailOptions.ConnectionStringName)));
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+        services.AddRateLimiter(options => options.AddPolicy(EmailSignInEndpoints.StartRateLimit, http =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = http.RequestServices.GetRequiredService<IOptions<IdentityModuleOptions>>().Value.EmailStartsPerAddressWindow,
+                    Window = EmailSignInEndpoints.ThrottleWindow.ToTimeSpan(),
+                })));
         return builder;
     }
 

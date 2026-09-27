@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +23,14 @@ internal static class EmailSignInEndpoints
     public static readonly Duration ThrottleWindow = Duration.FromMinutes(10);
     public const int MaxLinksPerWindow = 3;
     public const string NonceCookie = "cn_email_nonce";
+    public const string StartRateLimit = "identity.email-start";
 
     public static void MapEmailSignIn(this RouteGroupBuilder group)
     {
-        group.MapPost("/email/start", StartAsync).WithName("StartEmailSignIn").WithRequestValidation<EmailStartRequest>();
+        group.MapPost("/email/start", StartAsync)
+            .WithName("StartEmailSignIn")
+            .WithRequestValidation<EmailStartRequest>()
+            .RequireRateLimiting(StartRateLimit);
         group.MapPost("/email/complete", CompleteAsync).WithName("CompleteEmailSignIn").WithRequestValidation<EmailCompleteRequest>();
     }
 

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using CareNest.Api.IntegrationTests.Infrastructure;
 using CareNest.Identity.Persistence;
 using Microsoft.AspNetCore.DataProtection;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using static CareNest.Api.IntegrationTests.Infrastructure.SignInExtensions;
 
 namespace CareNest.Api.IntegrationTests;
 
@@ -52,5 +54,18 @@ public class ProductionHostingTests(ApiFactory factory)
         using var broken = factory.WithWebHostBuilder(builder => builder.UseSetting("Frontend:ClientAppUrl", "/app"));
 
         Should.Throw<OptionsValidationException>(() => broken.CreateClient());
+    }
+
+    [Fact]
+    public async Task Email_start_is_limited_per_network_address()
+    {
+        await using var limited = factory.WithWebHostBuilder(builder => builder.UseSetting("Identity:EmailStartsPerAddressWindow", "2"));
+        var client = limited.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        Task<HttpResponseMessage> StartAsync() =>
+            client.PostAsJsonAsync("/api/identity/email/start", new { email = NewEmail(), callbackUrl = EmailCallbackUrl, language = "en", timeZone = "UTC" });
+
+        (await StartAsync()).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        (await StartAsync()).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        await (await StartAsync()).ShouldBeProblemAsync(HttpStatusCode.TooManyRequests, "rate_limited");
     }
 }

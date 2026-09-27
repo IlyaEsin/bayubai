@@ -1,5 +1,6 @@
 {
   "validation_failed": "Please check the entered data",
+  "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
   "identity.invalid_return_url": "Invalid return address",
   "identity.invalid_sign_in_mode": "Invalid sign-in mode",
   "identity.provider_unavailable": "This sign-in method is not available right now",

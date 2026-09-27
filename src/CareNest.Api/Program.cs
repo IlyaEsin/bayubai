@@ -1,5 +1,6 @@
 using CareNest.Api;
 using CareNest.Identity;
+using CareNest.SharedKernel.Errors;
 using CareNest.SharedKernel.Web;
 using Microsoft.AspNetCore.HttpOverrides;
 using NodaTime;
@@ -23,6 +24,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) => new ValueTask(CommonErrors.TooManyRequests.ToProblem().ExecuteAsync(context.HttpContext));
+});
 builder.AddIdentityModule();
 
 var app = builder.Build();
@@ -35,6 +41,7 @@ app.UseStatusCodePages();
 app.UseCors(policy => policy.WithOrigins(frontend.Origins).AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapOpenApi();
 if (app.Environment.IsDevelopment())

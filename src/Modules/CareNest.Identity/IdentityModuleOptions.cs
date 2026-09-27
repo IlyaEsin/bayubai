@@ -12,6 +12,9 @@ internal sealed class IdentityModuleOptions
 
     public int InvitationLifetimeDays { get; set; } = 14;
 
+    // Sign-in emails one network address may request per throttle window, on top of the per-email limit.
+    public int EmailStartsPerAddressWindow { get; set; } = 20;
+
     public string? TelegramBotToken { get; set; }
 
     public string? TelegramBotName { get; set; }
