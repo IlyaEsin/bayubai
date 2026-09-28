@@ -497,7 +497,7 @@ The consultant and her clients may live in different zones. Each person already 
 
 `tests/CareNest.Api.IntegrationTests/AccountServiceTests.cs`: each `EnsureConsultantAsync(email..., "<name>", CancellationToken.None)` call gains `new NewUserDefaults("ru", "Europe/Moscow")` before the token, e.g.:
 ```csharp
-        var created = await accounts.EnsureConsultantAsync(email, "Regina", new NewUserDefaults("ru", "Europe/Moscow"), CancellationToken.None);
+        var created = await accounts.EnsureConsultantAsync(email, "Anna", new NewUserDefaults("ru", "Europe/Moscow"), CancellationToken.None);
 ```
 
 Add to `tests/CareNest.Api.IntegrationTests/InvitationTests.cs`, before `Used_invitation_is_rejected`:
