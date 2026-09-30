@@ -13,7 +13,7 @@
     "@carenest/api-client": "workspace:*",
     "@carenest/i18n": "workspace:*",
     "@carenest/ui": "workspace:*",
-    "@tanstack/react-query": "5.103.2",
+    "@tanstack/react-query": "5.104.0",
     "@tanstack/react-router": "1.170.39",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/router-plugin": "1.168.40",
-    "@vite-pwa/assets-generator": "1.0.4",
+    "@vite-pwa/assets-generator": "2.0.0",
     "@vitejs/plugin-react": "6.1.1",
     "tailwindcss": "4.3.3",
     "vite": "8.3.1",
