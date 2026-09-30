@@ -306,6 +306,8 @@ GitHub Actions workflow `.github/workflows/backend.yml` запускается �
 - **Dependabot** (`.github/dependabot.yml`) - раз в неделю открывает pull request'ы с обновлениями NuGet-, npm-пакетов и GitHub Actions, сгруппированные по экосистеме.
 - **Push protection** - GitHub отклоняет push, в котором распознал секрет, ещё до того, как он попадёт в репозиторий.
 
+`main` защищён ruleset'ом `main`: изменения попадают туда только через pull request, обязательные проверки - `build-and-test`, `checks`, `smoke`, `secrets-scan`, `forbidden-references` (ветка PR должна быть актуальной относительно `main`); прямой push, force push и удаление ветки запрещены.
+
 Официальная документация: https://github.com/gitleaks/gitleaks, https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning, https://docs.github.com/en/code-security/dependabot, https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations
 YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependabot tutorial`
 
