@@ -107,8 +107,23 @@ fi
 # The Aspire template is subscription-scoped (it declares the resource group) and assigns roles to the app identities.
 az role assignment create --assignee-object-id "$sp_id" --assignee-principal-type ServicePrincipal \
   --role Contributor --scope "/subscriptions/$subscription" --output none
-az role assignment create --assignee-object-id "$sp_id" --assignee-principal-type ServicePrincipal \
-  --role "Role Based Access Control Administrator" --scope "$group_id" --output none
+# Constrained delegation: the deploy identity may grant or remove only the two roles the template gives the app identities, never Owner or its own roles.
+# Built-in role ids: Key Vault Secrets User and AcrPull.
+vault_reader_role="4633458b-17de-408a-b874-0445c86b69e6"
+registry_pull_role="7f951dda-4ed3-4680-a7ca-43fe172d538d"
+delegation_condition="((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$vault_reader_role, $registry_pull_role})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {$vault_reader_role, $registry_pull_role}))"
+rbac_admin=$(tsv az role assignment list --assignee "$sp_id" --role "Role Based Access Control Administrator" \
+  --scope "$group_id" --query "[0].[id, condition]" --output tsv)
+# An earlier assignment without this exact condition would keep more power than intended, so a re-run replaces it.
+if [ -n "$rbac_admin" ] && [ "$(printf '%s' "$rbac_admin" | cut -f2)" != "$delegation_condition" ]; then
+  az role assignment delete --ids "$(printf '%s' "$rbac_admin" | cut -f1)"
+  rbac_admin=""
+fi
+if [ -z "$rbac_admin" ]; then
+  az role assignment create --assignee-object-id "$sp_id" --assignee-principal-type ServicePrincipal \
+    --role "Role Based Access Control Administrator" --scope "$group_id" \
+    --condition "$delegation_condition" --condition-version "2.0" --output none
+fi
 az role assignment create --assignee-object-id "$sp_id" --assignee-principal-type ServicePrincipal \
   --role "Key Vault Secrets User" --scope "$vault_id" --output none
 

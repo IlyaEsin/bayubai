@@ -43,6 +43,10 @@ The two database passwords are Container Apps secrets written by the deploy, not
 - The API signs in as `bayubai_app` and never sees the admin password. The local AppHost and the integration tests run the API the same way, so a missing grant fails there first.
 - Both connection strings use `SSL Mode=VerifyFull`: the server certificate must chain to a trusted root and match the host name.
 
+## Deploy identity
+
+The GitHub Actions identity `bayubai-deploy` has Contributor on the subscription and Key Vault Secrets User on the vault. Its Role Based Access Control Administrator role on `rg-bayubai` carries a condition: it may only assign or remove Key Vault Secrets User and AcrPull, the two roles the template gives the app identities. A template that needs another role fails at deploy; widen the condition in `bootstrap.sh` and re-run it.
+
 ## First-time setup
 
 1. Buy the domain, create the Azure subscription, sign in with `az login` and `gh auth login`.
