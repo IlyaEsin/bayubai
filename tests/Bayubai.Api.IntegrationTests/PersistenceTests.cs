@@ -6,6 +6,7 @@ using Bayubai.SharedKernel.Consultants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
+using Npgsql;
 
 namespace Bayubai.Api.IntegrationTests;
 
@@ -48,9 +49,36 @@ public class PersistenceTests(ApiFactory factory)
         (await asNobody.Invitations.AnyAsync()).ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("CREATE TABLE identity.probe (id int)")]
+    [InlineData("CREATE TABLE public.probe (id int)")]
+    [InlineData("DROP TABLE identity.\"AspNetUsers\"")]
+    [InlineData("ALTER TABLE identity.\"AspNetUsers\" ADD COLUMN probe int")]
+    public async Task App_role_cannot_change_the_schema(string ddl)
+    {
+        await using var connection = new NpgsqlConnection(factory.AppConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(ddl, connection);
+
+        var error = await Should.ThrowAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
+
+        error.SqlState.ShouldBe(PostgresErrorCodes.InsufficientPrivilege);
+    }
+
+    [Fact]
+    public async Task Preparing_the_database_again_keeps_the_app_role_working()
+    {
+        await factory.PrepareDatabaseAsync(CancellationToken.None);
+
+        await using var connection = new NpgsqlConnection(factory.AppConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand("SELECT count(*) FROM identity.\"AspNetRoles\"", connection);
+        ((long)(await command.ExecuteScalarAsync())!).ShouldBe(3);
+    }
+
     private IdentityModuleDbContext CreateContext(Guid? consultantId) => new(
         new DbContextOptionsBuilder<IdentityModuleDbContext>()
-            .UseNpgsql(factory.ConnectionString, IdentityModuleDbContext.ConfigureNpgsql)
+            .UseNpgsql(factory.AdminConnectionString, IdentityModuleDbContext.ConfigureNpgsql)
             .Options,
         new FixedConsultant(consultantId));
 

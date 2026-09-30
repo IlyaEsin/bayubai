@@ -7,6 +7,7 @@ using Bayubai.Identity.External;
 using Bayubai.Identity.Persistence;
 using Bayubai.Identity.Security;
 using Bayubai.SharedKernel.Consultants;
+using Bayubai.SharedKernel.Persistence;
 using Bayubai.SharedKernel.Web;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -114,6 +115,14 @@ public static class IdentityModule
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IdentityModuleDbContext>();
         await db.Database.MigrateAsync(cancellationToken);
+    }
+
+    public static async Task GrantIdentityDatabaseAccessAsync(this IServiceProvider services, string role, CancellationToken cancellationToken)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityModuleDbContext>();
+        await db.Database.OpenConnectionAsync(cancellationToken);
+        await PostgresAccess.GrantDataAccessAsync(db.Database.GetDbConnection(), IdentityModuleDbContext.Schema, role, cancellationToken);
     }
 
     private static void ConfigureSessionCookie(CookieAuthenticationOptions options)

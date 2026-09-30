@@ -73,9 +73,12 @@ ask_secret() {
 }
 
 echo "== Secrets"
-if ! az keyvault secret show --vault-name "$vault" --name postgres-password --output none 2>/dev/null; then
-  set_secret postgres-password "$(openssl rand -base64 36 | tr -d '/+=')"
-fi
+# The server admin is used only by the migrations job; the API signs in as a role the job creates with the second password.
+for name in postgres-password postgres-app-password; do
+  if ! az keyvault secret show --vault-name "$vault" --name "$name" --output none 2>/dev/null; then
+    set_secret "$name" "$(openssl rand -base64 36 | tr -d '/+=')"
+  fi
+done
 ask_secret admin-email "Admin email (the address you sign in with)"
 ask_secret email-username "Brevo SMTP login"
 ask_secret email-password "Brevo SMTP key"
