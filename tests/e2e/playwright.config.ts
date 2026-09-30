@@ -23,9 +23,9 @@ export default defineConfig({
     // Per-issue "how to test" scenarios (how-to-test skill), shown in a visible browser.
     { name: 'how-to-test', testDir: './how-to-test', use: { headless: false, launchOptions: { slowMo: 500 } } },
   ],
-  // Reuses a running `dotnet run --project src/CareNest.AppHost`; otherwise starts it (Docker must be running).
+  // Reuses a running `dotnet run --project src/Bayubai.AppHost`; otherwise starts it (Docker must be running).
   webServer: {
-    command: 'dotnet run --project ../../src/CareNest.AppHost',
+    command: 'dotnet run --project ../../src/Bayubai.AppHost',
     url: studioUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 600_000,

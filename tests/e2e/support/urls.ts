@@ -4,7 +4,7 @@ export const studioUrl = 'http://localhost:5174';
 export const mailpitUrl = 'http://localhost:8025';
 
 // Seeded as an admin by the AppHost in run mode (Identity:AdminEmails:99).
-export const adminEmail = 'admin@carenest.local';
+export const adminEmail = 'admin@bayubai.local';
 
 export const adminStatePath = '.auth/admin.json';
 
