@@ -118,7 +118,7 @@ public static class IdentityModule
 
     private static void ConfigureSessionCookie(CookieAuthenticationOptions options)
     {
-        options.Cookie.Name = "cn_session";
+        options.Cookie.Name = "bb_session";
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;

@@ -22,7 +22,7 @@ internal static class EmailSignInEndpoints
     public static readonly Duration LinkLifetime = Duration.FromMinutes(15);
     public static readonly Duration ThrottleWindow = Duration.FromMinutes(10);
     public const int MaxLinksPerWindow = 3;
-    public const string NonceCookie = "cn_email_nonce";
+    public const string NonceCookie = "bb_email_nonce";
     public const string StartRateLimit = "identity.email-start";
 
     public static void MapEmailSignIn(this RouteGroupBuilder group)

@@ -2093,14 +2093,14 @@ On a branch `docs/foundation-delivered`:
 
 ## Notes for later sub-projects
 
-- **Public landing page (owner idea, 2026-09-27).** Replace the consultant's Tilda site-card with a public page inside CareNest that is its facade: the call to action leads to sign-up, and the mother is linked to that consultant, instead of a Telegram chat.
+- **Public landing page (owner idea, 2026-09-27).** Replace the consultant's Tilda site-card with a public page inside Bayubai that is its facade: the call to action leads to sign-up, and the mother is linked to that consultant, instead of a Telegram chat.
   - Agreed direction: a page generated from platform data (the consultant's profile and the service catalog of sub-project 2), not a copy of one consultant's site, so every consultant gets one.
-  - Texts, photos and prices are data in the consultant's account (loaded from `carenest-private`), never in this public repository.
+  - Texts, photos and prices are data in the consultant's account (loaded from `bayubai-private`), never in this public repository.
   - Serve prerendered static HTML for search engines, for example as a third free Static Web App.
   - Its own small sub-project right after sub-project 2, starting with brainstorming.
 - **Stale magic-link tokens** still accumulate until the background jobs of sub-project 5 add cleanup (plan 1 note).
 - **iOS installed PWA and email links:** see plan 2's notes; a code-based email sign-in or the Telegram Mini App (sub-project 5) avoids it.
-- **`cn_email_nonce` cookie and sibling subdomains** (plan 2 note): every subdomain of the domain must stay under our control. The Static Web Apps and Container Apps bindings are ours, and DNS is only at the owner's registrar.
+- **`bb_email_nonce` cookie and sibling subdomains** (plan 2 note): every subdomain of the domain must stay under our control. The Static Web Apps and Container Apps bindings are ours, and DNS is only at the owner's registrar.
 - **Brevo processes parents' email addresses.** When the privacy policy is written (before public launch), list Brevo, Azure (EU) and the OAuth providers as processors.
 - **152-FZ** stays open, as decided on 2026-09-25. The portability rule (no Azure SDK in the app, architecture test) keeps a move to a Russian host a redeploy.
 - **Migrations after the API revision:** if a future change cannot be made backward compatible, split it into two releases rather than adding a pre-deploy migration step.

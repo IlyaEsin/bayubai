@@ -23,7 +23,7 @@ internal sealed class FakeOAuthOptions : RemoteAuthenticationOptions
 internal sealed class FakeOAuthHandler(IOptionsMonitor<FakeOAuthOptions> options, ILoggerFactory logger, UrlEncoder encoder)
     : RemoteAuthenticationHandler<FakeOAuthOptions>(options, logger, encoder)
 {
-    public const string SubjectCookie = "cn_fake_subject";
+    public const string SubjectCookie = "bb_fake_subject";
     public const string DefaultSubject = "fake-user";
 
     protected override Task HandleChallengeAsync(AuthenticationProperties properties)

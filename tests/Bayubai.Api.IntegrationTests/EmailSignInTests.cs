@@ -244,7 +244,7 @@ public class EmailSignInTests(ApiFactory factory)
     {
         var start = await StartAsync(factory.CreateHttpsClient(), NewEmail());
 
-        var cookie = start.Headers.GetValues("Set-Cookie").Single(value => value.StartsWith("cn_email_nonce=", StringComparison.Ordinal));
+        var cookie = start.Headers.GetValues("Set-Cookie").Single(value => value.StartsWith("bb_email_nonce=", StringComparison.Ordinal));
         cookie.ShouldContain("path=/api/identity/email");
         cookie.ShouldContain("httponly");
         cookie.ShouldContain("secure");

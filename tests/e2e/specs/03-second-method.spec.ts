@@ -4,7 +4,7 @@ import { clientUrl } from '../support/urls';
 
 // The fake provider stands in for Google, Yandex ID and VK ID; this cookie tells it which account the "provider" returns.
 async function actAsFakeSubject(page: Page, subject: string) {
-  await page.context().addCookies([{ name: 'cn_fake_subject', value: subject, domain: 'localhost', path: '/' }]);
+  await page.context().addCookies([{ name: 'bb_fake_subject', value: subject, domain: 'localhost', path: '/' }]);
 }
 
 test('a parent adds a second sign-in method and can sign in with either', async ({ browser }) => {

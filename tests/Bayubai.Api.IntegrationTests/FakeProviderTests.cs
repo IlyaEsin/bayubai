@@ -62,7 +62,7 @@ public class FakeProviderTests(ApiFactory factory)
     {
         var start = new HttpRequestMessage(HttpMethod.Get,
             $"/api/identity/external/Fake/start?returnUrl={Uri.EscapeDataString(ReturnUrl)}&mode={mode}&language=en&timeZone=UTC");
-        start.Headers.Add("Cookie", $"cn_fake_subject={subject}");
+        start.Headers.Add("Cookie", $"bb_fake_subject={subject}");
         var challenge = await client.SendAsync(start);
         challenge.StatusCode.ShouldBe(HttpStatusCode.Redirect);
 
