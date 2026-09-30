@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\CareNest.SharedKernel\CareNest.SharedKernel.csproj" />
-  </ItemGroup>
-
-</Project>

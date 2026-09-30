@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "CareNest.Api | v1",
+    "title": "Bayubai.Api | v1",
     "version": "1.0.0"
   },
   "paths": {

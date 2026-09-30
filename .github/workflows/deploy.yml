@@ -106,7 +106,7 @@ jobs:
         run: |
           az bicep install
           dotnet tool restore
-          dotnet aspire deploy --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --non-interactive --nologo
+          dotnet aspire deploy --apphost src/Bayubai.AppHost/Bayubai.AppHost.csproj --non-interactive --nologo
 
       - name: Apply database migrations
         run: bash deploy/run-migrations.sh "$Azure__ResourceGroup"

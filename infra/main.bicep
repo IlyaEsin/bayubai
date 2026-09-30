@@ -8,7 +8,7 @@ param principalId string
 
 param key_vault string
 
-param postgres_user string = 'carenest'
+param postgres_user string = 'bayubai'
 
 @secure()
 param postgres_password string

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <UserSecretsId>bayubai-migrations</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bayubai.ServiceDefaults\Bayubai.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Modules\Bayubai.Identity\Bayubai.Identity.csproj" />
+  </ItemGroup>
+
+</Project>
