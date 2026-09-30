@@ -13,8 +13,8 @@ Checked on every pull request, by a person or by Claude. A "no" needs a fix or a
 ## Module boundaries
 
 - [ ] Only the module's root namespace is public; modules do not reference each other; cross-module calls go through a public interface in the callee's root namespace.
-- [ ] No business logic in `CareNest.Api`.
-- [ ] No Azure SDK outside `CareNest.AppHost` and `CareNest.ServiceDefaults`.
+- [ ] No business logic in `Bayubai.Api`.
+- [ ] No Azure SDK outside `Bayubai.AppHost` and `Bayubai.ServiceDefaults`.
 
 ## Migrations (they run after the new API revision is live)
 

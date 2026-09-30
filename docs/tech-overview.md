@@ -1,8 +1,8 @@
-# Обзор технологий CareNest
+# Обзор технологий Баюбай
 
 ## 1. Введение
 
-Этот документ - для владельца проекта: он объясняет, из чего состоит бэкенд CareNest и почему выбраны именно эти технологии. Целевой читатель - .NET-разработчик, который уверенно работает с .NET и PostgreSQL, но не сталкивался с Aspire, Mailpit, Testcontainers и азурными сервисами. Документ не заменяет официальную документацию - он даёт контекст: что это, зачем нам, где лежит в репозитории, как выглядит в повседневной работе.
+Этот документ - для владельца проекта: он объясняет, из чего состоит бэкенд Баюбай и почему выбраны именно эти технологии. Целевой читатель - .NET-разработчик, который уверенно работает с .NET и PostgreSQL, но не сталкивался с Aspire, Mailpit, Testcontainers и азурными сервисами. Документ не заменяет официальную документацию - он даёт контекст: что это, зачем нам, где лежит в репозитории, как выглядит в повседневной работе.
 
 Правило: документ пополняется вместе с проектом. Когда в кодовую базу приходит новая технология, в том же изменении в этот файл добавляется новый раздел (см. `CLAUDE.md`, раздел "Conventions").
 
@@ -12,27 +12,27 @@
 
 ```
 src/
-├─ CareNest.AppHost/          оркестрация локального запуска (.NET Aspire)
-├─ CareNest.ServiceDefaults/  общие настройки: OpenTelemetry, health checks, resilience
-├─ CareNest.Api/              хост: запуск, DI, регистрация модулей, OpenAPI - без бизнес-логики
-├─ CareNest.SharedKernel/     общие примитивы: id, ошибки, часы (IClock), язык, консультантская изоляция
-├─ CareNest.MigrationService/ применяет миграции модулей (локально и при деплое)
+├─ Bayubai.AppHost/          оркестрация локального запуска (.NET Aspire)
+├─ Bayubai.ServiceDefaults/  общие настройки: OpenTelemetry, health checks, resilience
+├─ Bayubai.Api/              хост: запуск, DI, регистрация модулей, OpenAPI - без бизнес-логики
+├─ Bayubai.SharedKernel/     общие примитивы: id, ошибки, часы (IClock), язык, консультантская изоляция
+├─ Bayubai.MigrationService/ применяет миграции модулей (локально и при деплое)
 └─ Modules/
-   └─ CareNest.Identity/      единственный модуль в этом под-проекте: пользователи, вход, роли, профили, приглашения
+   └─ Bayubai.Identity/      единственный модуль в этом под-проекте: пользователи, вход, роли, профили, приглашения
 
 tests/
-├─ CareNest.SharedKernel.Tests/       модульные тесты общих примитивов
-├─ CareNest.Identity.Tests/           модульные тесты модуля Identity
-├─ CareNest.Api.IntegrationTests/     HTTP-тесты через WebApplicationFactory + настоящий PostgreSQL (Testcontainers)
-└─ CareNest.ArchitectureTests/        тесты, проверяющие границы модулей (NetArchTest)
+├─ Bayubai.SharedKernel.Tests/       модульные тесты общих примитивов
+├─ Bayubai.Identity.Tests/           модульные тесты модуля Identity
+├─ Bayubai.Api.IntegrationTests/     HTTP-тесты через WebApplicationFactory + настоящий PostgreSQL (Testcontainers)
+└─ Bayubai.ArchitectureTests/        тесты, проверяющие границы модулей (NetArchTest)
 ```
 
 Как части связаны:
-- `CareNest.Api` - это только хост. Он подключает модули (`AddIdentityModule()`) и открывает их эндпоинты (`MapIdentityEndpoints()`), но сам не содержит бизнес-логики.
-- Каждый модуль в `src/Modules/` - отдельный проект. Публичным для других частей системы является только код в корневом namespace модуля (например, `CareNest.Identity.IdentityModule`); всё остальное - `internal`. Модули не ссылаются друг на друга напрямую - это проверяется архитектурными тестами.
-- `CareNest.SharedKernel` - единственная зависимость, которую могут использовать модули; сам он ни от одного модуля не зависит.
-- `CareNest.AppHost` не содержит бизнес-логики - это программа для локального запуска и модель деплоя (см. раздел 11).
-- `CareNest.MigrationService` - отдельный процесс, который применяет миграции баз данных; API-хост миграции не запускает (раздел 6).
+- `Bayubai.Api` - это только хост. Он подключает модули (`AddIdentityModule()`) и открывает их эндпоинты (`MapIdentityEndpoints()`), но сам не содержит бизнес-логики.
+- Каждый модуль в `src/Modules/` - отдельный проект. Публичным для других частей системы является только код в корневом namespace модуля (например, `Bayubai.Identity.IdentityModule`); всё остальное - `internal`. Модули не ссылаются друг на друга напрямую - это проверяется архитектурными тестами.
+- `Bayubai.SharedKernel` - единственная зависимость, которую могут использовать модули; сам он ни от одного модуля не зависит.
+- `Bayubai.AppHost` не содержит бизнес-логики - это программа для локального запуска и модель деплоя (см. раздел 11).
+- `Bayubai.MigrationService` - отдельный процесс, который применяет миграции баз данных; API-хост миграции не запускает (раздел 6).
 
 Фронтенд живёт в `web/` (раздел 17):
 
@@ -58,7 +58,7 @@ tests/e2e/          сценарии Playwright (они же живая демо
 Что именно из .NET 10 мы используем:
 - **Minimal API** - облегчённый способ описывать HTTP-эндпоинты без контроллеров (раздел 4).
 - **Встроенная генерация документа OpenAPI** (`Microsoft.AspNetCore.OpenApi`, пакет версии `10.0.12`) - без сторонних библиотек вроде Swashbuckle (раздел 9).
-- **`.slnx`** - новый, более компактный XML-формат файла решения (`CareNest.slnx` вместо `.sln`).
+- **`.slnx`** - новый, более компактный XML-формат файла решения (`Bayubai.slnx` вместо `.sln`).
 
 Честно про ограничение, которое мы обнаружили: .NET 10 умеет валидировать Minimal API запросы "из коробки" (`AddValidation()` / атрибут `[ValidatableType]`), но эта встроенная валидация **не увидела typy запросов, объявленные в модулях** (то есть почти все наши запросы) - это было проверено вручную 24 сентября 2026 года при написании плана. Опциональный атрибут `[ValidatableType]` вдобавок помечен как experimental (предупреждение `ASP0029`) и в проверке тоже не сработал. Поэтому мы **не используем** встроенную валидацию, а вместо неё - `DataAnnotations` на типах запроса плюс общий фильтр эндпоинта (`.WithRequestValidation<T>()`, см. `CLAUDE.md`, раздел "Conventions"). Это пример решения, принятого не потому что "так модно", а потому что альтернативу проверили и она не подошла.
 
@@ -72,12 +72,12 @@ group.MapEmailSignIn();
 group.MapProfile();
 ```
 
-(см. `src/Modules/CareNest.Identity/IdentityModule.cs`, метод `MapIdentityEndpoints`).
+(см. `src/Modules/Bayubai.Identity/IdentityModule.cs`, метод `MapIdentityEndpoints`).
 
 **Модульный монолит** - архитектурный стиль между "всё в одном большом клубке" и микросервисами: один процесс и одна база данных (что просто эксплуатировать), но код внутри жёстко разделён на модули с явными границами (что не даёт архитектуре расползтись). У нас:
 - нет MediatR - вызовы между слоями внутри модуля - обычные вызовы методов, без дополнительной библиотеки-медиатора;
 - модули не ссылаются друг на друга: если модулю A нужно что-то от модуля B, вызов идёт только через публичный интерфейс в корневом namespace модуля B;
-- границы проверяются автоматически: `CareNest.ArchitectureTests` использует `NetArchTest.Rules`, чтобы тест падал в CI, если кто-то по ошибке добавил ссылку на internal-класс другого модуля (раздел 14).
+- границы проверяются автоматически: `Bayubai.ArchitectureTests` использует `NetArchTest.Rules`, чтобы тест падал в CI, если кто-то по ошибке добавил ссылку на internal-класс другого модуля (раздел 14).
 
 Такой стиль даёт монолиту дисциплину, при которой в будущем (если понадобится) модуль можно будет вынести в отдельный сервис без переписывания бизнес-логики.
 
@@ -98,10 +98,10 @@ PostgreSQL - open source реляционная СУБД. Мы выбрали е
 Как добавить миграцию для модуля Identity (команда из `CLAUDE.md`):
 
 ```bash
-dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output-dir Persistence/Migrations --namespace CareNest.Identity.Persistence.Migrations
+dotnet ef migrations add <Name> --project src/Modules/Bayubai.Identity --output-dir Persistence/Migrations --namespace Bayubai.Identity.Persistence.Migrations
 ```
 
-**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`CareNest.MigrationService`** (`src/CareNest.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `CareNest.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/CareNest.AppHost/AppHost.cs`) перед стартом `CareNest.Api`; при деплое в Azure это задание (job) Container Apps `migrations`, которое workflow деплоя запускает и дожидается (раздел 16).
+**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`Bayubai.MigrationService`** (`src/Bayubai.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `Bayubai.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/Bayubai.AppHost/AppHost.cs`) перед стартом `Bayubai.Api`; при деплое в Azure это задание (job) Container Apps `migrations`, которое workflow деплоя запускает и дожидается (раздел 16).
 
 ## 7. NodaTime
 
@@ -111,7 +111,7 @@ dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output
 - **`Instant`** - точный момент времени в UTC, без привязки к часовому поясу - для меток "когда это произошло" (создание приглашения, отправка письма и т.д.);
 - **часовой пояс пользователя** хранится как IANA id (например, `Europe/Moscow`), а не как смещение - потому что смещение может измениться из-за перехода на летнее время, а имя зоны - нет;
 - **`LocalDateTime` + зона** - когда нужно локальное "настенное" время человека;
-- **`IClock`** - абстракция над "текущим временем", которая внедряется через DI. В продакшене это `SystemClock.Instance` (см. `src/CareNest.Api/Program.cs`), а в тестах - `FakeClock` из `NodaTime.Testing`, что позволяет тестам управлять временем напрямую, не дожидаясь реальных минут и не гоняясь за `DateTime.Now` в моках.
+- **`IClock`** - абстракция над "текущим временем", которая внедряется через DI. В продакшене это `SystemClock.Instance` (см. `src/Bayubai.Api/Program.cs`), а в тестах - `FakeClock` из `NodaTime.Testing`, что позволяет тестам управлять временем напрямую, не дожидаясь реальных минут и не гоняясь за `DateTime.Now` в моках.
 
 ## 8. ASP.NET Core Identity без паролей
 
@@ -124,23 +124,23 @@ dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output
 - **Telegram** - через Login Widget, с проверкой подписи HMAC секретом бота.
 - **Email** - magic link (одноразовая ссылка для входа), живёт 15 минут, одноразовая, отправляется по SMTP через Brevo в проде и через Mailpit локально (раздел 12).
 
-Сессии - **cookie**, а не токены в JavaScript: `HttpOnly` (недоступна из JS - защита от XSS), `Secure` (только по HTTPS), `SameSite=Lax` (базовая защита от CSRF). Настройка cookie - в `IdentityModule.ConfigureSessionCookie` (`src/Modules/CareNest.Identity/IdentityModule.cs`). Такой подход требует, чтобы приложения и API были на одном регистрируемом домене (`app.`, `studio.`, `api.` - поддомены одного домена), иначе браузер cookie между ними не пропустит.
+Сессии - **cookie**, а не токены в JavaScript: `HttpOnly` (недоступна из JS - защита от XSS), `Secure` (только по HTTPS), `SameSite=Lax` (базовая защита от CSRF). Настройка cookie - в `IdentityModule.ConfigureSessionCookie` (`src/Modules/Bayubai.Identity/IdentityModule.cs`). Такой подход требует, чтобы приложения и API были на одном регистрируемом домене (`app.`, `studio.`, `api.` - поддомены одного домена), иначе браузер cookie между ними не пропустит.
 
 Почему аккаунты не склеиваются по email: у Telegram email вообще нет, а автоматическое объединение аккаунтов по непроверенному email открывает путь к захвату чужого аккаунта (кто-то регистрируется на чужой email раньше настоящего владельца). Поэтому привязка второго способа входа возможна только вручную, пока пользователь уже вошёл в систему.
 
 ## 9. OpenAPI
 
-**OpenAPI** - стандарт описания HTTP API в машиночитаемом формате (какие есть эндпоинты, какие у них параметры, какие ответы). У нас документ генерируется прямо из кода (`builder.Services.AddOpenApi(...)` и `app.MapOpenApi()` в `src/CareNest.Api/Program.cs`) и доступен по адресу `/openapi/v1.json`. Это единый источник правды о контракте API для всех клиентов.
+**OpenAPI** - стандарт описания HTTP API в машиночитаемом формате (какие есть эндпоинты, какие у них параметры, какие ответы). У нас документ генерируется прямо из кода (`builder.Services.AddOpenApi(...)` и `app.MapOpenApi()` в `src/Bayubai.Api/Program.cs`) и доступен по адресу `/openapi/v1.json`. Это единый источник правды о контракте API для всех клиентов.
 
 В плане 2 из этого документа будет автоматически сгенерирован TypeScript-клиент для фронтенда с помощью инструмента **orval** - то есть фронтенд не будет писать HTTP-запросы руками, а получит готовые типизированные хуки.
 
 ## 10. Scalar
 
-**Scalar** - UI для просмотра OpenAPI-документа и ручных запросов к API: интерактивная страница со списком эндпоинтов, схемами запросов и ответов и кнопкой "Try it" прямо в браузере, без отдельного инструмента вроде Postman. Пакет `Scalar.AspNetCore` (`app.MapScalarApiReference()` в `src/CareNest.Api/Program.cs`) строит эту страницу поверх уже имеющегося документа `/openapi/v1.json` (раздел 9).
+**Scalar** - UI для просмотра OpenAPI-документа и ручных запросов к API: интерактивная страница со списком эндпоинтов, схемами запросов и ответов и кнопкой "Try it" прямо в браузере, без отдельного инструмента вроде Postman. Пакет `Scalar.AspNetCore` (`app.MapScalarApiReference()` в `src/Bayubai.Api/Program.cs`) строит эту страницу поверх уже имеющегося документа `/openapi/v1.json` (раздел 9).
 
 Страница подключена только для `Development` (`app.Environment.IsDevelopment()`) - в тестовом окружении и в проде её нет, это инструмент локальной разработки и демонстраций, а не часть публичного API. Обслуживается с того же адреса, что и сам API, а не с отдельного origin, поэтому кнопка "Try it" отправляет запросы с той же cookie-сессией, что уже есть в браузере.
 
-Адрес: `{адрес api}/scalar`. Под Aspire (`dotnet run --project src/CareNest.AppHost`) адрес API смотрите в дашборде. При отдельном запуске API (`dotnet run --project src/CareNest.Api`) без `--launch-profile` используется первый профиль из `launchSettings.json` - `http`, `http://localhost:5042` - а сессионная cookie помечена `Secure` и не отправляется по http, поэтому для авторизованных запросов запускайте `dotnet run --project src/CareNest.Api --launch-profile https`, тогда Scalar будет на `https://localhost:7136/scalar`.
+Адрес: `{адрес api}/scalar`. Под Aspire (`dotnet run --project src/Bayubai.AppHost`) адрес API смотрите в дашборде. При отдельном запуске API (`dotnet run --project src/Bayubai.Api`) без `--launch-profile` используется первый профиль из `launchSettings.json` - `http`, `http://localhost:5042` - а сессионная cookie помечена `Secure` и не отправляется по http, поэтому для авторизованных запросов запускайте `dotnet run --project src/Bayubai.Api --launch-profile https`, тогда Scalar будет на `https://localhost:7136/scalar`.
 
 Официальная документация: https://scalar.com/products/api-references/integrations/aspnetcore/integration
 
@@ -153,12 +153,12 @@ dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output
 - Node.js 22.18+ и pnpm 10.34.5 (`npm install -g pnpm@10.34.5`) - для веб-приложений.
 
 Дальше:
-1. Администратор для демонстрации уже есть: `admin@carenest.local` (письмо со ссылкой приходит в Mailpit). Свой email можно добавить так: `dotnet user-secrets --project src/CareNest.Api set "Identity:AdminEmails:0" "<ваш email>"`.
-2. Запустите весь стек: `dotnet run --project src/CareNest.AppHost`.
+1. Администратор для демонстрации уже есть: `admin@bayubai.local` (письмо со ссылкой приходит в Mailpit). Свой email можно добавить так: `dotnet user-secrets --project src/Bayubai.Api set "Identity:AdminEmails:0" "<ваш email>"`.
+2. Запустите весь стек: `dotnet run --project src/Bayubai.AppHost`.
 3. В консоли появится ссылка на Aspire-дашборд с одноразовым токеном входа - откройте её в браузере.
 4. В дашборде найдите ресурс `api` и откройте его адрес - это и есть `{адрес api}` выше; `{адрес api}/scalar` откроет Scalar, а `{адрес api}/openapi/v1.json` - сырой OpenAPI-документ.
 5. Там же найдите ресурс `email` (Mailpit) и откройте его веб-интерфейс - туда приходят magic-link письма вместо реального почтового ящика (раздел 12).
-6. Для готового пошагового сценария вместо ручного набора запросов используйте `src/CareNest.Api/CareNest.Api.http` (Visual Studio, Rider или расширение REST Client в VS Code): вход администратора, создание консультанта, приглашение и вход родителя, обновление и удаление профиля.
+6. Для готового пошагового сценария вместо ручного набора запросов используйте `src/Bayubai.Api/Bayubai.Api.http` (Visual Studio, Rider или расширение REST Client в VS Code): вход администратора, создание консультанта, приглашение и вход родителя, обновление и удаление профиля.
 7. Родительское приложение - http://localhost:5173, кабинет консультанта и админка - http://localhost:5174. Кнопка "Войти через тестовый вход" входит без почты (аккаунт выбирается cookie `cn_fake_subject`, по умолчанию `fake-user`).
 8. Готовый сценарий показа в браузере: при запущенном AppHost выполните в `tests/e2e/` команду `pnpm walkthrough` - Playwright откроет видимый браузер и медленно пройдёт вход, приглашение и принятие (раздел 14).
 
@@ -167,13 +167,13 @@ dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output
 OAuth-провайдеры (Google, Yandex ID, VK ID) и Telegram по умолчанию не настроены - без собственных ключей в user-secrets соответствующий способ входа просто не появляется в ответе `/api/identity/providers`. Чтобы включить их локально:
 
 ```bash
-dotnet user-secrets --project src/CareNest.Api set "Identity:Providers:<Name>:ClientId" "<client id>"
-dotnet user-secrets --project src/CareNest.Api set "Identity:Providers:<Name>:ClientSecret" "<client secret>"
-dotnet user-secrets --project src/CareNest.Api set "Identity:TelegramBotToken" "<токен бота>"
-dotnet user-secrets --project src/CareNest.Api set "Identity:TelegramBotName" "<имя бота>"
+dotnet user-secrets --project src/Bayubai.Api set "Identity:Providers:<Name>:ClientId" "<client id>"
+dotnet user-secrets --project src/Bayubai.Api set "Identity:Providers:<Name>:ClientSecret" "<client secret>"
+dotnet user-secrets --project src/Bayubai.Api set "Identity:TelegramBotToken" "<токен бота>"
+dotnet user-secrets --project src/Bayubai.Api set "Identity:TelegramBotName" "<имя бота>"
 ```
 
-где `<Name>` - `Google`, `Yandex` или `VkId` (см. `src/Modules/CareNest.Identity/External/ExternalProviders.cs`).
+где `<Name>` - `Google`, `Yandex` или `VkId` (см. `src/Modules/Bayubai.Identity/External/ExternalProviders.cs`).
 
 Redirect URI (callback), который нужно зарегистрировать в консоли провайдера: `/api/identity/signin-<provider>` в нижнем регистре (`signin-google`, `signin-yandex`, `signin-vkid`). Локально фронтенд ходит к API через прокси Vite, поэтому с точки зрения браузера и провайдера хост - это хост самого приложения, а не API: чтобы настоящие Google/Yandex/VK ID реально сработали локально, в консоли провайдера нужно зарегистрировать `http://localhost:5173/api/identity/signin-<provider>` (родительское приложение) и `http://localhost:5174/api/identity/signin-<provider>` (кабинет консультанта). В продакшене регистрируется один адрес - origin самого API (`https://api.<domain>/api/identity/signin-<provider>`, раздел "Notes for plan 3" в плане).
 
@@ -181,7 +181,7 @@ Redirect URI (callback), который нужно зарегистрирова�
 
 **.NET Aspire** - набор инструментов Microsoft для локальной разработки распределённых приложений: он поднимает связанные сервисы (базу, очереди, другие процессы) одной командой, настраивает между ними service discovery, прокидывает переменные окружения и даёт единый дашборд с логами и трассировками.
 
-`src/CareNest.AppHost/AppHost.cs` выбирает между локальной и азурной моделью по `builder.ExecutionContext.IsPublishMode`:
+`src/Bayubai.AppHost/AppHost.cs` выбирает между локальной и азурной моделью по `builder.ExecutionContext.IsPublishMode`:
 
 ```csharp
 if (builder.ExecutionContext.IsPublishMode)
@@ -194,26 +194,26 @@ else
 }
 ```
 
-Локальная модель (`src/CareNest.AppHost/LocalStack.cs`) описывает окружение так:
+Локальная модель (`src/Bayubai.AppHost/LocalStack.cs`) описывает окружение так:
 
 ```csharp
 var postgres = builder.AddPostgres("postgres").WithDataVolume();
-var database = postgres.AddDatabase("carenest");
+var database = postgres.AddDatabase("bayubai");
 // Fixed ports so Playwright can read the inbox at a known address.
 var email = builder.AddMailPit("email", httpPort: 8025, smtpPort: 1025);
 
-var migrations = builder.AddProject<Projects.CareNest_MigrationService>("migrations")
+var migrations = builder.AddProject<Projects.Bayubai_MigrationService>("migrations")
     .WithReference(database)
     .WaitFor(database);
 
 // Local demo and e2e only: a one-click test sign-in and a known admin; index 99 leaves user-secrets admins at 0 untouched.
-var api = builder.AddProject<Projects.CareNest_Api>("api")
+var api = builder.AddProject<Projects.Bayubai_Api>("api")
     .WithReference(database)
     .WithReference(email)
     .WaitFor(database)
     .WaitForCompletion(migrations)
     .WithEnvironment("Identity__Providers__Fake__Enabled", "true")
-    .WithEnvironment("Identity__AdminEmails__99", "admin@carenest.local");
+    .WithEnvironment("Identity__AdminEmails__99", "admin@bayubai.local");
 
 // Ports match Frontend:Origins in the API's appsettings.Development.json.
 var client = builder.AddViteApp("client", "../../web/apps/client")
@@ -230,23 +230,23 @@ builder.AddViteApp("studio", "../../web/apps/studio")
     .WaitFor(client);
 ```
 
-То есть при запуске поднимаются: контейнеры PostgreSQL и Mailpit (у Mailpit фиксированные порты: интерфейс и API на http://localhost:8025), процесс `CareNest.MigrationService`, затем `CareNest.Api`, затем оба веб-приложения: `client` на http://localhost:5173 и `studio` на http://localhost:5174 (пакет `Aspire.Hosting.JavaScript`: он сам выполняет `pnpm install` и запускает `vite`). Тестовый способ входа "тестовый вход" и `admin@carenest.local` как администратор - часть только этой, локальной модели; при деплое в Azure используется другая модель, `AddAzureDeployment()` (см. «Публикация в Azure» ниже).
+То есть при запуске поднимаются: контейнеры PostgreSQL и Mailpit (у Mailpit фиксированные порты: интерфейс и API на http://localhost:8025), процесс `Bayubai.MigrationService`, затем `Bayubai.Api`, затем оба веб-приложения: `client` на http://localhost:5173 и `studio` на http://localhost:5174 (пакет `Aspire.Hosting.JavaScript`: он сам выполняет `pnpm install` и запускает `vite`). Тестовый способ входа "тестовый вход" и `admin@bayubai.local` как администратор - часть только этой, локальной модели; при деплое в Azure используется другая модель, `AddAzureDeployment()` (см. «Публикация в Azure» ниже).
 
 Запуск:
 
 ```bash
-dotnet run --project src/CareNest.AppHost
+dotnet run --project src/Bayubai.AppHost
 ```
 
-После запуска открывается **Aspire-дашборд** в браузере - там видно список всех запущенных ресурсов, их логи в реальном времени, распределённые трассировки запросов (через OpenTelemetry - см. `CareNest.ServiceDefaults`) и метрики.
+После запуска открывается **Aspire-дашборд** в браузере - там видно список всех запущенных ресурсов, их логи в реальном времени, распределённые трассировки запросов (через OpenTelemetry - см. `Bayubai.ServiceDefaults`) и метрики.
 
 Чем это удобнее docker-compose: docker-compose описывает только контейнеры и их сети, а Aspire ещё и умеет управлять процессами .NET напрямую (без обёртывания в Docker), автоматически прокидывает connection string'и и адреса сервисов друг другу через переменные окружения, и даёт единый экран для логов/трейсов сразу для контейнеров и .NET-процессов вместе - не нужно параллельно смотреть `docker logs` и консоль `dotnet run`.
 
 ### Публикация в Azure
 
-У AppHost две модели. При `dotnet run` работает локальная (`LocalStack.cs`): контейнеры, Mailpit, Vite. При `aspire publish` и `aspire deploy` - азурная (`AzureDeployment.cs`): Container Apps, PostgreSQL Flexible Server, Key Vault, Application Insights и два Static Web Apps (раздел 16). `aspire publish` превращает модель в Bicep (декларативный язык описания ресурсов Azure) в папке `infra/`; этот вывод коммитится, чтобы изменение инфраструктуры было видно в pull request, а CI проверяет, что `infra/` совпадает с моделью. Настройки, от которых зависит модель, лежат в `src/CareNest.AppHost/appsettings.json` (раздел `Deploy`), а не в переменных окружения, поэтому `infra/` определяется только закоммиченными файлами.
+У AppHost две модели. При `dotnet run` работает локальная (`LocalStack.cs`): контейнеры, Mailpit, Vite. При `aspire publish` и `aspire deploy` - азурная (`AzureDeployment.cs`): Container Apps, PostgreSQL Flexible Server, Key Vault, Application Insights и два Static Web Apps (раздел 16). `aspire publish` превращает модель в Bicep (декларативный язык описания ресурсов Azure) в папке `infra/`; этот вывод коммитится, чтобы изменение инфраструктуры было видно в pull request, а CI проверяет, что `infra/` совпадает с моделью. Настройки, от которых зависит модель, лежат в `src/Bayubai.AppHost/appsettings.json` (раздел `Deploy`), а не в переменных окружения, поэтому `infra/` определяется только закоммиченными файлами.
 
-Aspire CLI закреплён как локальный инструмент (`.config/dotnet-tools.json`): `dotnet tool restore`, затем `dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`.
+Aspire CLI закреплён как локальный инструмент (`.config/dotnet-tools.json`): `dotnet tool restore`, затем `dotnet aspire publish --apphost src/Bayubai.AppHost/Bayubai.AppHost.csproj --output-path infra`.
 
 Официальная документация: https://aspire.dev/deployment/azure/
 
@@ -256,32 +256,32 @@ Aspire CLI закреплён как локальный инструмент (`.
 
 У нас это значит: письма с magic link при локальной разработке не отправляются реальным получателям - они видны в веб-интерфейсе Mailpit (по умолчанию поднимается Aspire'ом вместе с остальным стеком, см. раздел 11). Это удобно для разработки и e2e-тестов - не нужен реальный email-провайдер и не нужно проверять реальный почтовый ящик.
 
-В продакшене вместо Mailpit письма отправляет **Brevo** - сервис рассылок (французская компания, данные в ЕС) через свой SMTP-relay `smtp-relay.brevo.com:587` с STARTTLS; бесплатный тариф - 300 писем в день. Код тот же самый `SmtpEmailSender`, меняются только настройки `Email:*`, поэтому другой провайдер - это смена конфигурации. Azure Communication Services Email, который был в спецификации, не взяли: Microsoft выводит его из эксплуатации 30 сентября 2028 года. Чтобы письма не попадали в спам, домен отправителя подтверждается в Brevo DNS-записями (DKIM, DMARC).
+В продакшене вместо Mailpit письма отправляет **Brevo** - сервис рассылок (французская компания, данные в ЕС) через свой SMTP-relay `smtp-relay.brevo.com:587` с STARTTLS; бесплатный тариф - 300 писем в день. Код тот же самый `SmtpEmailSender`, меняются только настройки `Email:*`, поэтому другой провайдер - это смена конфигурации. Отправитель во всех письмах - `Баюбай <no-reply@<домен>>` (`Email:From`, в азурной модели `src/Bayubai.AppHost/AzureDeployment.cs`). Azure Communication Services Email, который был в спецификации, не взяли: Microsoft выводит его из эксплуатации 30 сентября 2028 года. Чтобы письма не попадали в спам, домен отправителя подтверждается в Brevo DNS-записями (DKIM, DMARC).
 
 Официальная документация: https://developers.brevo.com/docs/smtp-integration
 
 ## 13. Docker
 
 Docker - платформа для запуска приложений в изолированных контейнерах. В этом проекте Docker не запускает саму продакшен-нагрузку локально, но нужен для двух вещей:
-- **.NET Aspire** поднимает PostgreSQL и Mailpit как Docker-контейнеры (раздел 11) - без установленного и запущенного Docker Desktop (или аналога) `dotnet run --project src/CareNest.AppHost` не сможет их создать;
-- **Testcontainers** в интеграционных тестах поднимает настоящий PostgreSQL в контейнере на время тестового прогона (раздел 14) - `dotnet test CareNest.slnx` тоже требует, чтобы Docker был запущен (это явно указано в `CLAUDE.md`).
+- **.NET Aspire** поднимает PostgreSQL и Mailpit как Docker-контейнеры (раздел 11) - без установленного и запущенного Docker Desktop (или аналога) `dotnet run --project src/Bayubai.AppHost` не сможет их создать;
+- **Testcontainers** в интеграционных тестах поднимает настоящий PostgreSQL в контейнере на время тестового прогона (раздел 14) - `dotnet test Bayubai.slnx` тоже требует, чтобы Docker был запущен (это явно указано в `CLAUDE.md`).
 
 ## 14. Тесты
 
 - **xUnit v3** - фреймворк для unit- и интеграционных тестов в .NET (используется версия `xunit.v3`).
 - **Shouldly** - библиотека для более читаемых assert'ов: вместо `Assert.Equal(expected, actual)` пишется `actual.ShouldBe(expected)`, а при падении тест выводит понятное сообщение об ошибке.
-- **Testcontainers** (`Testcontainers.PostgreSql`) - для `CareNest.Api.IntegrationTests`: вместо мока базы данных или SQLite поднимается настоящий PostgreSQL в Docker-контейнере на время теста, так тесты проверяют поведение на той же СУБД, что и в проде (включая NodaTime-типы, `jsonb` и специфичные для PostgreSQL детали).
-- **NetArchTest** (`NetArchTest.Rules`) - библиотека для тестов, которые проверяют не поведение кода, а его структуру: например, "ни один класс из модуля Identity, кроме публичного API, не должен быть виден снаружи" (`CareNest.ArchitectureTests`).
+- **Testcontainers** (`Testcontainers.PostgreSql`) - для `Bayubai.Api.IntegrationTests`: вместо мока базы данных или SQLite поднимается настоящий PostgreSQL в Docker-контейнере на время теста, так тесты проверяют поведение на той же СУБД, что и в проде (включая NodaTime-типы, `jsonb` и специфичные для PostgreSQL детали).
+- **NetArchTest** (`NetArchTest.Rules`) - библиотека для тестов, которые проверяют не поведение кода, а его структуру: например, "ни один класс из модуля Identity, кроме публичного API, не должен быть виден снаружи" (`Bayubai.ArchitectureTests`).
 - **FakeClock** (`NodaTime.Testing`) - подменяет `IClock` в тестах, чтобы управлять "текущим временем" напрямую (раздел 7).
 - **Playwright** (`tests/e2e/`) - сквозные тесты в настоящем браузере против всего стека, поднятого Aspire: вход по ссылке из письма (письмо читается из Mailpit через его HTTP API), профиль и мгновенная смена языка, тема, консультант приглашает родителя из другого часового пояса и оба видят местное время друг друга, повторное приглашение, второй способ входа через тестовый провайдер. Родительские страницы открываются в размере телефона. `pnpm test` - без окна (так же в CI), `pnpm walkthrough` - в видимом браузере с паузами, как живая демонстрация. Если AppHost не запущен, Playwright запускает его сам.
-- **how-to-test** - сценарии Playwright к конкретной задаче: `tests/e2e/how-to-test/cn-<номер>/`, запуск `pnpm how-to-test cn-<номер>` из `tests/e2e/` в видимом браузере. Их пишет Claude по навыку `.claude/skills/how-to-test`, чтобы изменение можно было увидеть своими глазами; навык `.claude/skills/build-test` выбирает, какие проверки запускать для изменённых файлов, а `REVIEW.md` - чек-лист ревью каждого pull request.
+- **how-to-test** - сценарии Playwright к конкретной задаче: `tests/e2e/how-to-test/bb-<номер>/`, запуск `pnpm how-to-test bb-<номер>` из `tests/e2e/` в видимом браузере. Их пишет Claude по навыку `.claude/skills/how-to-test`, чтобы изменение можно было увидеть своими глазами; навык `.claude/skills/build-test` выбирает, какие проверки запускать для изменённых файлов, а `REVIEW.md` - чек-лист ревью каждого pull request.
 
 Команды (из `CLAUDE.md`):
 
 ```bash
-dotnet build CareNest.slnx
-dotnet test CareNest.slnx                       # нужен запущенный Docker
-dotnet test tests/CareNest.Identity.Tests       # один проект
+dotnet build Bayubai.slnx
+dotnet test Bayubai.slnx                       # нужен запущенный Docker
+dotnet test tests/Bayubai.Identity.Tests       # один проект
 ```
 
 ## 15. CI
@@ -289,9 +289,9 @@ dotnet test tests/CareNest.Identity.Tests       # один проект
 GitHub Actions workflow `.github/workflows/backend.yml` запускается на каждый pull request и на push в `main`. Что он делает:
 1. Скачивает код (`actions/checkout`).
 2. Ставит .NET SDK ровно той версии, что закреплена в `global.json` (`actions/setup-dotnet` с `global-json-file: global.json`) - то есть в CI используется та же версия SDK, что и локально.
-3. `dotnet restore CareNest.slnx` - восстанавливает NuGet-пакеты.
-4. `dotnet build CareNest.slnx --no-restore --configuration Release` - собирает решение в конфигурации Release.
-5. `dotnet test CareNest.slnx --no-build --configuration Release` - прогоняет все тесты решения (unit, интеграционные через Testcontainers и архитектурные).
+3. `dotnet restore Bayubai.slnx` - восстанавливает NuGet-пакеты.
+4. `dotnet build Bayubai.slnx --no-restore --configuration Release` - собирает решение в конфигурации Release.
+5. `dotnet test Bayubai.slnx --no-build --configuration Release` - прогоняет все тесты решения (unit, интеграционные через Testcontainers и архитектурные).
 
 В backend-workflow есть ещё шаг "Committed infra matches the Azure model": он заново генерирует `infra/` из модели Aspire и падает, если результат отличается от закоммиченного (раздел 11).
 
@@ -313,18 +313,18 @@ YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependa
 
 ## 16. Azure и деплой
 
-Продакшен работает в Azure, регион West Europe. Всё описано кодом: модель ресурсов - `src/CareNest.AppHost/AzureDeployment.cs`, сгенерированный из неё Bicep - `infra/` (раздел 11), деплой - `.github/workflows/deploy.yml`, разовая подготовка и эксплуатация - `deploy/bootstrap.sh` и `deploy/README.md`.
+Продакшен работает в Azure, регион West Europe, в группе ресурсов `rg-bayubai`. Всё описано кодом: модель ресурсов - `src/Bayubai.AppHost/AzureDeployment.cs`, сгенерированный из неё Bicep - `infra/` (раздел 11), деплой - `.github/workflows/deploy.yml`, разовая подготовка и эксплуатация - `deploy/bootstrap.sh` и `deploy/README.md`.
 
 Ресурсы:
 - **Azure Container Apps** - управляемый запуск контейнеров без администрирования виртуальных машин. Здесь живут API (одна всегда тёплая реплика, максимум две) и задание (job) `migrations`, которое применяет миграции базы.
 - **Azure Container Registry** - хранилище Docker-образов, которые собирает деплой.
 - **Azure Database for PostgreSQL Flexible Server** (Burstable B1ms, 32 ГБ, бэкапы 7 дней) - управляемый PostgreSQL; вход по паролю, чтобы приложению не нужен был Azure SDK.
-- **Azure Static Web Apps** (бесплатный тариф) - `cn-client` и `cn-studio`, статические сборки двух приложений, с бесплатными сертификатами для `app.` и `studio.`.
-- **Key Vault** - хранилище секретов: пароль базы, email администратора, логин и ключ SMTP, ключи OAuth-провайдеров, токен Telegram-бота.
+- **Azure Static Web Apps** (бесплатный тариф) - `bb-client` и `bb-studio`, статические сборки двух приложений, с бесплатными сертификатами для `app.` и `studio.`.
+- **Key Vault** (`kv-bayubai-<6 hex>`, имя печатает `bootstrap.sh`) - хранилище секретов: пароль базы, email администратора, логин и ключ SMTP, ключи OAuth-провайдеров, токен Telegram-бота.
 - **Application Insights + Log Analytics** - логи, метрики и трассировки, которые локально видны в Aspire-дашборде (раздел 11).
 - **Бюджет** 40 USD в месяц с письмами при 80% и 100% (создаётся один раз скриптом `deploy/bootstrap.sh`). Оценка расходов - около 31 USD в месяц: PostgreSQL ~19, Container Registry ~5, тёплая реплика API ~6, остальное почти бесплатно.
 
-**Как секреты попадают в приложение.** Секреты приложения (email администратора, SMTP, OAuth-провайдеры, Telegram, строка подключения `ConnectionStrings__carenest`) Container Apps хранит не значениями, а ссылками на секреты Key Vault (Key Vault references) и читает их управляемым удостоверением (managed identity) приложения. Исключение - дополнительные параметры подключения к базе (`CARENEST_URI`, `CARENEST_PASSWORD`), которые Aspire добавляет из `WithReference(database)`: их значения, включая пароль базы, деплой записывает прямо в секреты Container Apps API и задания `migrations` (`infra/api/api.bicep`, `infra/migrations/migrations.bicep`). Приложение получает всё это как обычные переменные окружения (`Email__Password`, `ConnectionStrings__carenest` и т.д.) и ничего не знает про Key Vault. В коде нет ни клиента Key Vault, ни другого Azure SDK (архитектурный тест, раздел 18), поэтому переезд на другой хостинг - это новая инфраструктура, а не переписывание кода. Секреты кладёт в Key Vault владелец (`bootstrap.sh` спрашивает их без вывода на экран); в репозитории и в GitHub их нет.
+**Как секреты попадают в приложение.** Секреты приложения (email администратора, SMTP, OAuth-провайдеры, Telegram, строка подключения `ConnectionStrings__bayubai`) Container Apps хранит не значениями, а ссылками на секреты Key Vault (Key Vault references) и читает их управляемым удостоверением (managed identity) приложения. Исключение - дополнительные параметры подключения к базе (`BAYUBAI_URI`, `BAYUBAI_PASSWORD`), которые Aspire добавляет из `WithReference(database)`: их значения, включая пароль базы, деплой записывает прямо в секреты Container Apps API и задания `migrations` (`infra/api/api.bicep`, `infra/migrations/migrations.bicep`). Приложение получает всё это как обычные переменные окружения (`Email__Password`, `ConnectionStrings__bayubai` и т.д.) и ничего не знает про Key Vault. В коде нет ни клиента Key Vault, ни другого Azure SDK (архитектурный тест, раздел 18), поэтому переезд на другой хостинг - это новая инфраструктура, а не переписывание кода. Секреты кладёт в Key Vault владелец (`bootstrap.sh` спрашивает их без вывода на экран); в репозитории и в GitHub их нет.
 
 **Как GitHub попадает в Azure.** Через OIDC (federated credentials): GitHub Actions получает короткоживущий токен, которому Azure доверяет для окружения `production` этого репозитория. Паролей и ключей Azure в GitHub нет.
 
@@ -340,7 +340,7 @@ YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependa
 
 ### 17.1 pnpm workspace и TypeScript
 
-**pnpm** - пакетный менеджер для Node.js. Workspace - это несколько пакетов в одном репозитории с общим `pnpm-lock.yaml`: приложения подключают общие пакеты как `"@carenest/ui": "workspace:*"`, без публикации в npm. Версия pnpm закреплена в `web/package.json` (`packageManager`), версии всех зависимостей - точные.
+**pnpm** - пакетный менеджер для Node.js. Workspace - это несколько пакетов в одном репозитории с общим `pnpm-lock.yaml`: приложения подключают общие пакеты как `"@bayubai/ui": "workspace:*"`, без публикации в npm. Версия pnpm закреплена в `web/package.json` (`packageManager`), версии всех зависимостей - точные.
 
 **TypeScript** - JavaScript с типами; общие настройки компилятора в `web/tsconfig.base.json` (`strict`). TypeScript держим на 6.0: линтер typescript-eslint пока не поддерживает TypeScript 7.
 
@@ -350,7 +350,7 @@ YouTube (EN): `pnpm workspaces monorepo tutorial`
 ### 17.2 orval: клиент API из OpenAPI
 
 **orval** читает OpenAPI-документ и генерирует TypeScript-типы и хуки TanStack Query (`useGetMe`, `useStartEmailSignIn`...), так что фронтенд не пишет HTTP-запросы руками. Цепочка контракта:
-1. интеграционный тест `OpenApiContractTests` сравнивает документ, который отдаёт API, с закоммиченным `web/packages/api-client/openapi.json` (после намеренного изменения API: `CARENEST_UPDATE_OPENAPI=1 dotnet test tests/CareNest.Api.IntegrationTests`);
+1. интеграционный тест `OpenApiContractTests` сравнивает документ, который отдаёт API, с закоммиченным `web/packages/api-client/openapi.json` (после намеренного изменения API: `BAYUBAI_UPDATE_OPENAPI=1 dotnet test tests/Bayubai.Api.IntegrationTests`);
 2. `pnpm generate:api` генерирует `web/packages/api-client/src/generated/` из этого файла; результат коммитится, CI проверяет, что он не устарел.
 
 Имена хуков берутся из `.WithName(...)` у эндпоинтов, поэтому у каждого эндпоинта должно быть имя. Ошибки приходят как `ApiProblem` с кодом (`identity.invite_expired`), который UI переводит.
@@ -378,11 +378,11 @@ YouTube (RU): `i18next react локализация`
 
 **Tailwind CSS** (v4) - CSS через классы прямо в разметке (`rounded-full px-5`). Цвета заданы токенами в `web/packages/ui/src/styles.css`: палитра по умолчанию взята с сайта консультанта-пилота (коралловый акцент, персиковый фон), но это только значения переменных, так что другой консультант может получить свою тему. **Radix** даёт доступные примитивы (метка поля, `Slot` для кнопки-ссылки), **lucide-react** - иконки. Компоненты написаны в стиле **shadcn/ui**: это не библиотека, а исходники в нашем пакете `ui`, которые мы правим сами.
 
-Тема: "как в системе" (по умолчанию), светлая или тёмная - переключатель в шапке обоих приложений. Выбор хранится на устройстве (`localStorage`, ключ `cn.theme`) и применяется скриптом в `index.html` ещё до отрисовки, чтобы ночью не мигал белый экран.
+Тема: "как в системе" (по умолчанию), светлая или тёмная - переключатель в шапке обоих приложений. Выбор хранится на устройстве (`localStorage`, ключ `bb.theme`) и применяется скриптом в `index.html` ещё до отрисовки, чтобы ночью не мигал белый экран.
 
 ### 17.6 MSW: фейковый API в компонентных тестах
 
-**MSW** (Mock Service Worker) перехватывает `fetch` в тестах и отвечает как API: тест говорит "на `POST /api/identity/email/start` ответь 202" и проверяет, что компонент отправил и показал. Общий набор для тестов - `@carenest/ui/testing`.
+**MSW** (Mock Service Worker) перехватывает `fetch` в тестах и отвечает как API: тест говорит "на `POST /api/identity/email/start` ответь 202" и проверяет, что компонент отправил и показал. Общий набор для тестов - `@bayubai/ui/testing`.
 
 Официальная документация: https://tailwindcss.com/docs, https://www.radix-ui.com/primitives, https://ui.shadcn.com/, https://mswjs.io/docs/
 YouTube (EN): `Tailwind CSS v4 crash course`, `shadcn ui tutorial`, `MSW mock service worker tutorial`
@@ -402,13 +402,13 @@ YouTube (EN): `TanStack Router tutorial`, `TanStack Query v5 tutorial`, `vite-pl
 
 Несколько настроек, без которых API работает локально, но ломается за балансировщиком или при перезапуске. Они не зависят от Azure: на любом хостинге за TLS-прокси работают так же.
 
-- **Forwarded headers.** В Azure Container Apps HTTPS заканчивается на входном прокси (ingress), а в контейнер запрос приходит по обычному http. Без `UseForwardedHeaders` API считал бы, что запрос пришёл по http, и, например, отдавал бы Google адрес возврата `http://...`, который провайдер отвергает. Прокси сообщает исходную схему и адрес клиента в заголовках `X-Forwarded-Proto` и `X-Forwarded-For`; `src/CareNest.Api/Program.cs` им доверяет, потому что снаружи к контейнеру можно попасть только через ingress. Заголовок `Host` от прокси не принимается, чтобы его нельзя было подменить. Middleware должен отработать ровно один раз: каждый проход снимает одну, самую правую, запись `X-Forwarded-For`. Ingress дописывает настоящий адрес клиента справа, всё левее пишет сам клиент. В Azure Aspire задаёт переменную `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, и тогда хост ASP.NET Core сам запускает этот middleware; поэтому `Program.cs` вызывает `UseForwardedHeaders` только когда переменная не задана (любой другой хостинг за TLS-прокси). Второй проход взял бы запись, которую написал клиент, и клиент мог бы выдать себя за любой адрес и обойти лимит по IP (тест `ProductionHostingTests`).
+- **Forwarded headers.** В Azure Container Apps HTTPS заканчивается на входном прокси (ingress), а в контейнер запрос приходит по обычному http. Без `UseForwardedHeaders` API считал бы, что запрос пришёл по http, и, например, отдавал бы Google адрес возврата `http://...`, который провайдер отвергает. Прокси сообщает исходную схему и адрес клиента в заголовках `X-Forwarded-Proto` и `X-Forwarded-For`; `src/Bayubai.Api/Program.cs` им доверяет, потому что снаружи к контейнеру можно попасть только через ingress. Заголовок `Host` от прокси не принимается, чтобы его нельзя было подменить. Middleware должен отработать ровно один раз: каждый проход снимает одну, самую правую, запись `X-Forwarded-For`. Ingress дописывает настоящий адрес клиента справа, всё левее пишет сам клиент. В Azure Aspire задаёт переменную `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, и тогда хост ASP.NET Core сам запускает этот middleware; поэтому `Program.cs` вызывает `UseForwardedHeaders` только когда переменная не задана (любой другой хостинг за TLS-прокси). Второй проход взял бы запись, которую написал клиент, и клиент мог бы выдать себя за любой адрес и обойти лимит по IP (тест `ProductionHostingTests`).
 - **Ключи Data Protection в базе.** ASP.NET Core шифрует cookie сессии и состояние OAuth ключами Data Protection. По умолчанию ключи живут в файловой системе контейнера и пропадают при каждом перезапуске - всех бы разлогинивало. У нас ключи лежат в таблице `identity.data_protection_keys` (пакет `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) и общие для всех реплик. У Container Apps есть своё хранилище ключей, и Aspire его включает, но явно настроенное хранилище приложения имеет приоритет (проверено по исходникам ASP.NET Core 10), так что источник один - база.
 - **`/alive`.** Проверка "процесс жив": Container Apps вызывает её каждые несколько секунд и при сбоях перезапускает контейнер. Отвечает только `Healthy`, поэтому открыта везде; подробный `/health` - только в Development.
 - **Ограничение частоты (rate limiting).** Встроенный в ASP.NET Core `RateLimiter`: с одного IP-адреса (это адрес, который дописал ingress, см. Forwarded headers выше) можно запросить не больше 20 писем для входа за 10 минут (`Identity:EmailStartsPerAddressWindow`). Счётчик живёт в памяти каждой реплики API, поэтому при двух репликах фактический потолок - до 40 писем; это приемлемо, потому что API работает не более чем в двух репликах. Сверх этого API отвечает 429 с кодом `rate_limited`, который интерфейс переводит. Это дополнение к лимиту в 3 письма на один email: тот защищает конкретный ящик, этот - почтовый сервис от перебора адресов.
 - **Проверка конфигурации при старте.** Если `Frontend:Origins` или `Frontend:ClientAppUrl` пустые или не абсолютные адреса, API не стартует (`ValidateOnStart`), а не ломает молча CORS и ссылки в письмах.
 - **Тестовый вход только локально.** Тестовый провайдер входа разрешён только в окружениях `Development` и `Testing`; в любом другом (Production, Staging) API с ним не стартует.
-- **Application Insights.** Экспортер Azure Monitor подключён в `CareNest.ServiceDefaults` и включается, только если задана переменная `APPLICATIONINSIGHTS_CONNECTION_STRING` (её задаёт деплой в Azure). Архитектурный тест следит, чтобы модули, SharedKernel и API не использовали Azure SDK: переезд на другой хостинг - это смена конфигурации, а не кода.
+- **Application Insights.** Экспортер Azure Monitor подключён в `Bayubai.ServiceDefaults` и включается, только если задана переменная `APPLICATIONINSIGHTS_CONNECTION_STRING` (её задаёт деплой в Azure). Архитектурный тест следит, чтобы модули, SharedKernel и API не использовали Azure SDK: переезд на другой хостинг - это смена конфигурации, а не кода.
 
 Официальная документация: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer, https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers
 YouTube (EN): `ASP.NET Core data protection keys explained`

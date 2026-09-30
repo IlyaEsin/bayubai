@@ -1,11 +1,13 @@
-# CareNest: Foundation (sub-project 1)
+# Bayubai: Foundation (sub-project 1)
+
+Renamed from CareNest on 2026-09-30 (`rename-to-bayubai.md`).
 
 Status: approved
 Date: 2026-09-24
 
 ## 1. Context
 
-CareNest is a platform that automates how an independent consultant works with parents. The first domain is infant and toddler sleep (children 0 to 4 years): a parent pays for a service, fills in an intake questionnaire and a multi-day sleep diary, the consultant analyses it and delivers a personalised sleep/wake schedule, then optionally keeps supporting the parent for several weeks.
+Bayubai is a platform that automates how an independent consultant works with parents. The first domain is infant and toddler sleep (children 0 to 4 years): a parent pays for a service, fills in an intake questionnaire and a multi-day sleep diary, the consultant analyses it and delivers a personalised sleep/wake schedule, then optionally keeps supporting the parent for several weeks.
 
 The platform is built and validated with one pilot consultant, but the domain is modelled for any consultant from day one. Nothing consultant-specific (questionnaires, rules, materials) lives in code; it is loaded into the consultant's account as data.
 
@@ -37,28 +39,28 @@ A deployed, empty but production-grade platform skeleton: a parent and a consult
 
 Two repositories:
 
-- **`carenest`** (public, GitHub): the engine and synthetic demo data only. Public as an engineering portfolio.
-- **`carenest-private`** (private, GitHub): source documents, anonymised real cases, and each consultant's templates, rules and materials in the platform's import format. Nothing flows from it into the public repo; the platform receives this data only through import into the consultant's account.
+- **`bayubai`** (public, GitHub): the engine and synthetic demo data only. Public as an engineering portfolio.
+- **`bayubai-private`** (private, GitHub): source documents, anonymised real cases, and each consultant's templates, rules and materials in the platform's import format. Nothing flows from it into the public repo; the platform receives this data only through import into the consultant's account.
 
 License: none (all rights reserved). The code is viewable, not reusable.
 
 ### Public repo layout
 
 ```
-carenest/
+bayubai/
 ├─ src/
-│  ├─ CareNest.AppHost/          .NET Aspire orchestration (local run and Azure deploy model)
-│  ├─ CareNest.ServiceDefaults/  Aspire defaults: OpenTelemetry, health checks, resilience
-│  ├─ CareNest.Api/              host: startup, DI, route groups, OpenAPI
-│  ├─ CareNest.SharedKernel/     ids, errors, clock, language, consultant scoping primitives
-│  ├─ CareNest.MigrationService/   applies module migrations (local run and deploy step)
+│  ├─ Bayubai.AppHost/          .NET Aspire orchestration (local run and Azure deploy model)
+│  ├─ Bayubai.ServiceDefaults/  Aspire defaults: OpenTelemetry, health checks, resilience
+│  ├─ Bayubai.Api/              host: startup, DI, route groups, OpenAPI
+│  ├─ Bayubai.SharedKernel/     ids, errors, clock, language, consultant scoping primitives
+│  ├─ Bayubai.MigrationService/   applies module migrations (local run and deploy step)
 │  └─ Modules/
-│     └─ CareNest.Identity/      users, sign-in, roles, profiles, invitations
+│     └─ Bayubai.Identity/      users, sign-in, roles, profiles, invitations
 ├─ tests/
-│  ├─ CareNest.SharedKernel.Tests/
-│  ├─ CareNest.Identity.Tests/
-│  ├─ CareNest.Api.IntegrationTests/   WebApplicationFactory + Testcontainers PostgreSQL
-│  ├─ CareNest.ArchitectureTests/
+│  ├─ Bayubai.SharedKernel.Tests/
+│  ├─ Bayubai.Identity.Tests/
+│  ├─ Bayubai.Api.IntegrationTests/   WebApplicationFactory + Testcontainers PostgreSQL
+│  ├─ Bayubai.ArchitectureTests/
 │  └─ e2e/                              Playwright smoke
 ├─ web/                          pnpm workspace
 │  ├─ apps/client/               parent app: PWA + Telegram Mini App, mobile-first
@@ -169,7 +171,7 @@ A user can delete their account. Deletion removes the user, their sign-in method
 
 ### Local development
 
-`dotnet run` on `CareNest.AppHost` starts PostgreSQL (container), the API, both Vite apps and Mailpit, with the Aspire dashboard for logs and traces.
+`dotnet run` on `Bayubai.AppHost` starts PostgreSQL (container), the API, both Vite apps and Mailpit, with the Aspire dashboard for logs and traces.
 
 ### Claude tooling (written for this repo)
 
@@ -179,9 +181,9 @@ A user can delete their account. Deletion removes the user, their sign-in method
   - no UI text outside i18n;
   - no personal data in logs;
   - account deletion covers all personal data.
-- **Tracking:** GitHub Issues. An issue `#12` is keyed `cn-12` in branches (`feature/cn-12-...`) and in spec and plan file names (`docs/superpowers/specs/cn-12-<description>.md`). Documents without an issue use `<description>.md`.
+- **Tracking:** GitHub Issues. An issue `#12` is keyed `bb-12` in branches (`feature/bb-12-...`) and in spec and plan file names (`docs/superpowers/specs/bb-12-<description>.md`). Documents without an issue use `<description>.md`.
 - **`build-test` skill:** backend `dotnet build` / `dotnet test` and frontend `pnpm lint` / `typecheck` / `test`, scoped to what changed.
-- **`how-to-test` skill:** Playwright scenarios per issue in `tests/e2e/how-to-test/cn-<n>/` (inside the e2e project, so the scenarios reuse its Playwright install and helpers), run output gitignored.
+- **`how-to-test` skill:** Playwright scenarios per issue in `tests/e2e/how-to-test/bb-<n>/` (inside the e2e project, so the scenarios reuse its Playwright install and helpers), run output gitignored.
 - **`REVIEW.md`:** project review checklist (the standing rules above plus module boundaries and migration safety).
 
 ### CI (GitHub Actions, every PR)
@@ -213,7 +215,7 @@ A user can delete their account. Deletion removes the user, their sign-in method
 - **Portability:** everything runs in containers, so moving to a Russian VPS (if Russian data-residency law or reachability from Russia becomes a problem) is a redeploy, not a rewrite. To keep it that way, application code uses no Azure SDK, only standard interfaces:
   - secrets reach the app as configuration (environment variables filled from Key Vault references by Container Apps), never through a Key Vault client in code;
   - email goes over SMTP (Brevo SMTP relay in production), so another provider is a settings change;
-  - telemetry goes through OpenTelemetry; the Azure Monitor exporter is switched on only in `CareNest.ServiceDefaults` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set;
+  - telemetry goes through OpenTelemetry; the Azure Monitor exporter is switched on only in `Bayubai.ServiceDefaults` when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set;
   - Azure-specific parts live only in the AppHost publish model, `infra/` and the deploy workflow. An architecture test fails if a module, SharedKernel or the API references an `Azure.*` package.
 
 ## 8. Acceptance criteria

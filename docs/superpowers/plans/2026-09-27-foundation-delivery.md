@@ -1,5 +1,7 @@
 # Foundation Delivery Implementation Plan (Foundation plan 3 of 3)
 
+> The project was renamed to Bayubai on 2026-09-30 (`docs/superpowers/specs/rename-to-bayubai.md`); Tasks 1-6 below are historical, Tasks 7-10 use the new names.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** CareNest runs in production on Azure behind its own domain, deployed from `main` by GitHub Actions, with every sign-in method working against real providers, hygiene checks and branch protection on the repository, and the Claude tooling the spec asks for.
@@ -1876,14 +1878,14 @@ Every step here is an owner action. The executor explains each one, waits for co
 
 **Interfaces:**
 - Produces:
-  - the domain `<domain>`;
+  - the domain `<domain>` (`bayubai.com`);
   - a subscription id;
-  - Key Vault `kv-carenest-<6 hex>` with `postgres-password`, `admin-email`, `email-username`, `email-password`;
-  - budget `cn-monthly`;
+  - Key Vault `kv-bayubai-<6 hex>` with `postgres-password`, `admin-email`, `email-username`, `email-password`;
+  - budget `bb-monthly`;
   - the deploy identity and GitHub environment `production` with its variables.
 
 - [ ] **Step 1: STOP (owner) - buy the domain**
-  - Buy a domain at any registrar that allows editing DNS records (CNAME and TXT for subdomains, TXT on the root).
+  - Buy `bayubai.com` at any registrar that allows editing DNS records (CNAME and TXT for subdomains, TXT on the root).
   - Keep in mind the planned public landing page (owner idea, 2026-09-27): if it will carry a brand, the root of this domain may later host it, with `app.`, `studio.` and `api.` for the system.
   - DNS must be plain (no proxy such as Cloudflare's orange cloud) for `api.`, or Azure cannot issue the managed certificate.
   - The owner confirms the domain name.
@@ -1896,7 +1898,7 @@ Every step here is an owner action. The executor explains each one, waits for co
 - [ ] **Step 3: STOP (owner) - Brevo**
   - Create a Brevo account (free plan).
   - Under Senders, Domains & Dedicated IPs, add and authenticate the domain: add the DNS records Brevo shows (Brevo code TXT, DKIM, DMARC) at the registrar.
-  - Add sender `no-reply@<domain>`.
+  - Add sender `no-reply@<domain>` (shown to recipients as `Баюбай <no-reply@bayubai.com>`, already set as `Email:From` in `src/Bayubai.AppHost/AzureDeployment.cs`).
   - Under SMTP & API, generate an SMTP key and note the SMTP login Brevo shows.
   - Check the free-plan conditions for transactional emails on the Brevo pricing page (300 emails per day at the time of writing).
   - The owner confirms the domain shows as authenticated.
@@ -1909,17 +1911,17 @@ The owner runs it (it prompts for the admin email, the Brevo SMTP login and the 
 ! bash deploy/bootstrap.sh <subscription-id> <domain> <budget-email>
 ```
 
-Expected: `Done. Key Vault: kv-carenest-xxxxxx, resource group: rg-carenest`. Then the executor verifies read-only:
+Expected: `Done. Key Vault: kv-bayubai-xxxxxx, resource group: rg-bayubai`. Then the executor verifies read-only:
 
 ```bash
-az keyvault secret list --vault-name kv-carenest-xxxxxx --query "[].name" --output tsv
-az consumption budget list --resource-group rg-carenest --query "[].{name:name, amount:amount}" --output table
-gh variable list --env production --repo IlyaEsin/carenest
+az keyvault secret list --vault-name kv-bayubai-xxxxxx --query "[].name" --output tsv
+az consumption budget list --resource-group rg-bayubai --query "[].{name:name, amount:amount}" --output table
+gh variable list --env production --repo IlyaEsin/bayubai
 ```
 
 Expected:
 - secrets `admin-email`, `email-password`, `email-username`, `postgres-password`;
-- budget `cn-monthly` 40;
+- budget `bb-monthly` 40;
 - six variables (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `DEPLOY_DOMAIN`, `DEPLOY_KEY_VAULT`).
 
 If a step of the script failed, fix the cause and re-run it; the script is idempotent.
@@ -1937,17 +1939,17 @@ If a step of the script failed, fix the cause and re-run it; the script is idemp
 After confirmation:
 
 ```bash
-gh variable set DEPLOY_ENABLED --repo IlyaEsin/carenest --body true
-gh workflow run deploy.yml --repo IlyaEsin/carenest --ref main
-gh run watch --repo IlyaEsin/carenest $(gh run list --workflow deploy.yml --repo IlyaEsin/carenest --limit 1 --json databaseId --jq '.[0].databaseId')
+gh variable set DEPLOY_ENABLED --repo IlyaEsin/bayubai --body true
+gh workflow run deploy.yml --repo IlyaEsin/bayubai --ref main
+gh run watch --repo IlyaEsin/bayubai $(gh run list --workflow deploy.yml --repo IlyaEsin/bayubai --limit 1 --json databaseId --jq '.[0].databaseId')
 ```
 
 Expected: every step green; the migrations step prints `Migrations applied`.
 
 This is the first real `aspire deploy`, so any failure here is new information. Use superpowers:systematic-debugging. Useful places to look:
 - the step log;
-- `az containerapp logs show --name api --resource-group rg-carenest --tail 100`;
-- `az containerapp job execution list --name migrations --resource-group rg-carenest --output table`;
+- `az containerapp logs show --name api --resource-group rg-bayubai --tail 100`;
+- `az containerapp job execution list --name migrations --resource-group rg-bayubai --output table`;
 - the failed deployment in the resource group's Deployments blade.
 
 Fix it on a branch through a PR, then re-run.
@@ -1955,7 +1957,7 @@ Fix it on a branch through a PR, then re-run.
 - [ ] **Step 2: Check the API on its Azure address**
 
 ```bash
-fqdn=$(az containerapp show --name api --resource-group rg-carenest --query properties.configuration.ingress.fqdn --output tsv)
+fqdn=$(az containerapp show --name api --resource-group rg-bayubai --query properties.configuration.ingress.fqdn --output tsv)
 curl -s -o /dev/null -w "%{http_code}\n" "https://$fqdn/alive"
 curl -s "https://$fqdn/api/identity/providers"
 curl -s -o /dev/null -w "%{http_code}\n" "https://$fqdn/scalar"
@@ -1969,14 +1971,14 @@ Expected:
 - [ ] **Step 3: STOP (owner) - DNS for api, app and studio**
 
 The executor prints the values:
-- `az containerapp show --name api --resource-group rg-carenest --query "{fqdn: properties.configuration.ingress.fqdn, verification: properties.customDomainVerificationId}"`
-- `az staticwebapp show --name cn-client --resource-group rg-carenest --query defaultHostname --output tsv`, and the same for `cn-studio`.
+- `az containerapp show --name api --resource-group rg-bayubai --query "{fqdn: properties.configuration.ingress.fqdn, verification: properties.customDomainVerificationId}"`
+- `az staticwebapp show --name bb-client --resource-group rg-bayubai --query defaultHostname --output tsv`, and the same for `bb-studio`.
 
 The owner creates at the registrar:
 - `CNAME api` to the API fqdn;
 - `TXT asuid.api` with the verification id;
-- `CNAME app` to the `cn-client` hostname;
-- `CNAME studio` to the `cn-studio` hostname.
+- `CNAME app` to the `bb-client` hostname;
+- `CNAME studio` to the `bb-studio` hostname.
 
 After the owner confirms, check with `nslookup -type=CNAME api.<domain>` (and `app.`, `studio.`) and `nslookup -type=TXT asuid.api.<domain>`. DNS may take up to an hour.
 
@@ -1984,12 +1986,12 @@ After the owner confirms, check with `nslookup -type=CNAME api.<domain>` (and `a
 
 Follow "API custom domain" in `deploy/README.md`, steps 3 and 4 (`hostname add`, `hostname bind`, find the certificate name, `gh variable set DEPLOY_API_CERTIFICATE`), then the two `az staticwebapp hostname set` commands.
 Expected:
-- `az containerapp hostname list --name api --resource-group rg-carenest --output table` shows `api.<domain>` with binding `SniEnabled`;
-- `az staticwebapp hostname list --name cn-client --resource-group rg-carenest --output table` shows `app.<domain>` as `Ready` (certificate issuance can take several minutes).
+- `az containerapp hostname list --name api --resource-group rg-bayubai --output table` shows `api.<domain>` with binding `SniEnabled`;
+- `az staticwebapp hostname list --name bb-client --resource-group rg-bayubai --output table` shows `app.<domain>` as `Ready` (certificate issuance can take several minutes).
 
 - [ ] **Step 5: Keep the binding in the model**
 
-On a branch `feature/api-custom-domain`, set `"CustomDomain": true` in `src/CareNest.AppHost/appsettings.json`, then run `dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`.
+On a branch `feature/api-custom-domain`, set `"CustomDomain": true` in `src/Bayubai.AppHost/appsettings.json`, then run `dotnet aspire publish --apphost src/Bayubai.AppHost/Bayubai.AppHost.csproj --output-path infra`.
 Expected: `infra/api/api.bicep` gains `customDomains` with `bindingType: (api_certificate != '') ? 'SniEnabled' : 'Disabled'`.
 
 Commit (`feat: keep the api custom domain binding on every deploy`), open a PR and ask the owner to merge it; merge nothing else in between.
@@ -2001,7 +2003,7 @@ After the deploy: `az containerapp hostname list ...` still shows `SniEnabled`, 
   - Then, in the admin screen, create the pilot consultant (her email is entered by the owner, never written into the repo).
   - Also test on a phone: `https://app.<domain>` signs in by email.
 
-The executor checks the logs for errors: `az containerapp logs show --name api --resource-group rg-carenest --tail 200`. Expected: no exceptions, and no emails or names in log lines (standing rule 4).
+The executor checks the logs for errors: `az containerapp logs show --name api --resource-group rg-bayubai --tail 200`. Expected: no exceptions, and no emails or names in log lines (standing rule 4).
 
 ---
 
@@ -2033,7 +2035,7 @@ The owner confirms each provider as done. The executor checks with `az keyvault 
 - [ ] **Step 2: Turn them on**
 
 On a branch `feature/production-providers`:
-- set `"Providers": ["Google", "Yandex", "VkId", "Telegram"]` in `src/CareNest.AppHost/appsettings.json`;
+- set `"Providers": ["Google", "Yandex", "VkId", "Telegram"]` in `src/Bayubai.AppHost/appsettings.json`;
 - regenerate `infra/`: `infra/api/api.bicep` gains eight Key Vault references and the matching `Identity__...` variables;
 - commit (`feat: enable Google, Yandex ID, VK ID and Telegram sign-in in production`), open a PR, and the owner merges.
 
@@ -2058,7 +2060,7 @@ Record the results (method, app, works yes/no) in the PR description of the fina
 
 On an Android phone (Chrome) and an iPhone (Safari), open `https://app.<domain>`:
 - install it (Android: "Install app"; iOS: Share, then "Add to Home Screen");
-- open it from the home screen: it runs full screen with the CareNest icon;
+- open it from the home screen: it runs full screen with the Bayubai icon;
 - switch the system to dark mode: the app follows;
 - sign in inside the installed app with an OAuth provider.
 
@@ -2066,7 +2068,7 @@ The iOS email-link limitation from plan 2's notes (the installed app has its own
 
 - [ ] **Step 2: Costs and alerts (acceptance 10)**
 
-Run `az consumption budget show --budget-name cn-monthly --resource-group rg-carenest --query "{amount:amount, notifications:notifications}"`, and in the portal look at Cost Management, Cost analysis for `rg-carenest` after a few days.
+Run `az consumption budget show --budget-name bb-monthly --resource-group rg-bayubai --query "{amount:amount, notifications:notifications}"`, and in the portal look at Cost Management, Cost analysis for `rg-bayubai` after a few days.
 Expected: the budget exists with its three notifications, and the daily run rate is in line with about 31 USD per month. Tell the owner if it is not.
 
 - [ ] **Step 3: Acceptance summary**
