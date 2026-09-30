@@ -1,4 +1,4 @@
-import { Card, PageTitle, PublicShell, SignInPanel, safeNext } from '@carenest/ui';
+import { Card, PageTitle, PublicShell, SignInPanel, safeNext } from '@bayubai/ui';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 

@@ -1,5 +1,5 @@
-import { useCompleteTelegramSignIn, type TelegramCompleteRequestAuth } from '@carenest/api-client';
-import { detectTimeZone, toLanguage } from '@carenest/i18n';
+import { useCompleteTelegramSignIn, type TelegramCompleteRequestAuth } from '@bayubai/api-client';
+import { detectTimeZone, toLanguage } from '@bayubai/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import type { SignInMode } from '../session/navigation';
 
 declare global {
   interface Window {
-    cnTelegramAuth?: (auth: TelegramCompleteRequestAuth) => void;
+    bbTelegramAuth?: (auth: TelegramCompleteRequestAuth) => void;
   }
 }
 
@@ -46,18 +46,18 @@ export function TelegramLoginButton({ botName, mode, onSignedIn }: TelegramLogin
       return;
     }
 
-    window.cnTelegramAuth = (auth) => onAuth(auth);
+    window.bbTelegramAuth = (auth) => onAuth(auth);
     const script = document.createElement('script');
     script.src = telegramWidgetUrl;
     script.async = true;
     script.setAttribute('data-telegram-login', botName);
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-onauth', 'cnTelegramAuth(user)');
+    script.setAttribute('data-onauth', 'bbTelegramAuth(user)');
     element.appendChild(script);
 
     return () => {
       element.replaceChildren();
-      delete window.cnTelegramAuth;
+      delete window.bbTelegramAuth;
     };
   }, [botName]);
 

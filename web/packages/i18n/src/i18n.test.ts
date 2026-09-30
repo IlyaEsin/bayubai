@@ -1,4 +1,4 @@
-import { ErrorCode } from '@carenest/api-client';
+import { ErrorCode } from '@bayubai/api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createI18n, detectBrowserLanguage, detectTimeZone, formatDateTime, formatLocalTime, resources } from './index';
 

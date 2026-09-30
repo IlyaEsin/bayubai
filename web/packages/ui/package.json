@@ -1,5 +1,5 @@
 {
-  "name": "@carenest/ui",
+  "name": "@bayubai/ui",
   "private": true,
   "type": "module",
   "exports": {
@@ -13,8 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@carenest/api-client": "workspace:*",
-    "@carenest/i18n": "workspace:*",
+    "@bayubai/api-client": "workspace:*",
+    "@bayubai/i18n": "workspace:*",
     "@tanstack/react-query": "5.103.2",
     "@tanstack/react-router": "1.170.39",
     "class-variance-authority": "0.7.1",

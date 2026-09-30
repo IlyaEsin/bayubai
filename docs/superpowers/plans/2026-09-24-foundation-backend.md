@@ -1,5 +1,7 @@
 # Foundation Backend Implementation Plan (Foundation plan 1 of 3)
 
+> The project was renamed to Bayubai on 2026-09-30 (`docs/superpowers/specs/rename-to-bayubai.md`); names below are historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A running .NET 10 modular-monolith backend where a parent or consultant signs in (email magic link, Google, Yandex ID, VK ID, Telegram), manages a profile, a consultant invites a parent who becomes their client, and a user can delete their account, all enforced by integration and architecture tests.

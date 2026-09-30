@@ -1,5 +1,5 @@
-import { ApiProblem } from '@carenest/api-client';
-import { languages } from '@carenest/i18n';
+import { ApiProblem } from '@bayubai/api-client';
+import { languages } from '@bayubai/i18n';
 import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/button';

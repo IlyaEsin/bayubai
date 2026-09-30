@@ -56,13 +56,13 @@ importers:
 
   apps/client:
     dependencies:
-      '@carenest/api-client':
+      '@bayubai/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
-      '@carenest/i18n':
+      '@bayubai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@carenest/ui':
+      '@bayubai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@tanstack/react-query':
@@ -105,13 +105,13 @@ importers:
 
   apps/studio:
     dependencies:
-      '@carenest/api-client':
+      '@bayubai/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
-      '@carenest/i18n':
+      '@bayubai/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@carenest/ui':
+      '@bayubai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@tanstack/react-query':
@@ -168,16 +168,16 @@ importers:
         specifier: 17.0.15
         version: 17.0.15(i18next@26.4.2(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
     devDependencies:
-      '@carenest/api-client':
+      '@bayubai/api-client':
         specifier: workspace:*
         version: link:../api-client
 
   packages/ui:
     dependencies:
-      '@carenest/api-client':
+      '@bayubai/api-client':
         specifier: workspace:*
         version: link:../api-client
-      '@carenest/i18n':
+      '@bayubai/i18n':
         specifier: workspace:*
         version: link:../i18n
       '@tanstack/react-query':

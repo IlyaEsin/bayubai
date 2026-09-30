@@ -1,5 +1,5 @@
-import { configureApi } from '@carenest/api-client';
-import { createI18n, type Language } from '@carenest/i18n';
+import { configureApi } from '@bayubai/api-client';
+import { createI18n, type Language } from '@bayubai/i18n';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { AppProviders, createQueryClient } from '../app/AppProviders';

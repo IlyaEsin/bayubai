@@ -1,5 +1,7 @@
 # Foundation Web Apps Implementation Plan (Foundation plan 2 of 3)
 
+> The project was renamed to Bayubai on 2026-09-30 (`docs/superpowers/specs/rename-to-bayubai.md`); names below are historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The parent app (`client`, mobile-first PWA) and the consultant/admin app (`studio`) on top of the plan 1 API: sign-in with every method, profile with language, time zone and light/dark theme, invitations end to end, both apps running under the Aspire AppHost for a live demo, and Playwright scenarios that double as the demo script.

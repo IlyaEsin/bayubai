@@ -13,12 +13,12 @@ Production runs on Azure (West Europe). A merge to `main` deploys through `.gith
 
 | What | Name |
 |---|---|
-| Resource group | `rg-carenest` |
-| Key Vault | `kv-carenest-<6 hex>` (printed by `bootstrap.sh`, GitHub variable `DEPLOY_KEY_VAULT`) |
+| Resource group | `rg-bayubai` |
+| Key Vault | `kv-bayubai-<6 hex>` (printed by `bootstrap.sh`, GitHub variable `DEPLOY_KEY_VAULT`) |
 | API | container app `api`, custom domain `api.<domain>` |
 | Migrations | Container Apps job `migrations` |
-| Web | Static Web Apps `cn-client` (`app.<domain>`), `cn-studio` (`studio.<domain>`) |
-| Budget | `cn-monthly`, 40 USD, mails at 80% and 100% |
+| Web | Static Web Apps `bb-client` (`app.<domain>`), `bb-studio` (`studio.<domain>`) |
+| Budget | `bb-monthly`, 40 USD, mails at 80% and 100% |
 
 ## Key Vault secrets
 
@@ -32,7 +32,7 @@ Production runs on Azure (West Europe). A merge to `main` deploys through `.gith
 | `vkid-client-id`, `vkid-client-secret` | VK ID app |
 | `telegram-bot-token`, `telegram-bot-name` | Telegram Login Widget bot |
 
-Set or rotate one: `az keyvault secret set --vault-name <vault> --name <secret> --value "<value>"`, then restart the API revision so it re-reads references: `az containerapp revision restart --name api --resource-group rg-carenest --revision $(az containerapp show --name api --resource-group rg-carenest --query properties.latestRevisionName --output tsv)`.
+Set or rotate one: `az keyvault secret set --vault-name <vault> --name <secret> --value "<value>"`, then restart the API revision so it re-reads references: `az containerapp revision restart --name api --resource-group rg-bayubai --revision $(az containerapp show --name api --resource-group rg-bayubai --query properties.latestRevisionName --output tsv)`.
 
 ## First-time setup
 
@@ -46,8 +46,8 @@ Set or rotate one: `az keyvault secret set --vault-name <vault> --name <secret> 
 
 1. Register the app with the provider. The redirect URI is `https://api.<domain>/api/identity/signin-<google|yandex|vkid>`.
 2. Put `<provider>-client-id` and `<provider>-client-secret` into Key Vault. For Telegram, put `telegram-bot-token` and `telegram-bot-name`.
-3. Add the provider (`Google`, `Yandex`, `VkId`, `Telegram`) to `Deploy:Providers` in `src/CareNest.AppHost/appsettings.json`.
-4. Regenerate `infra/` (`dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`) and merge a PR.
+3. Add the provider (`Google`, `Yandex`, `VkId`, `Telegram`) to `Deploy:Providers` in `src/Bayubai.AppHost/appsettings.json`.
+4. Regenerate `infra/` (`dotnet aspire publish --apphost src/Bayubai.AppHost/Bayubai.AppHost.csproj --output-path infra`) and merge a PR.
 
 The order matters: a referenced secret that does not exist stops the deploy at the check step.
 
@@ -55,22 +55,22 @@ The order matters: a referenced secret that does not exist stops the deploy at t
 
 The binding needs DNS records that can only point at the app after the first deploy, so it is switched on in five steps:
 
-1. `az containerapp show --name api --resource-group rg-carenest --query "{fqdn: properties.configuration.ingress.fqdn, verification: properties.customDomainVerificationId}"`.
+1. `az containerapp show --name api --resource-group rg-bayubai --query "{fqdn: properties.configuration.ingress.fqdn, verification: properties.customDomainVerificationId}"`.
 2. At the registrar:
    - `CNAME api` pointing at that fqdn;
    - `TXT asuid.api` with the verification id.
 3. Add and bind the hostname with a free managed certificate:
-   - `az containerapp hostname add --hostname api.<domain> --name api --resource-group rg-carenest`
-   - `az containerapp hostname bind --hostname api.<domain> --name api --resource-group rg-carenest --environment $(az containerapp env list --resource-group rg-carenest --query "[0].name" --output tsv) --validation-method CNAME`
+   - `az containerapp hostname add --hostname api.<domain> --name api --resource-group rg-bayubai`
+   - `az containerapp hostname bind --hostname api.<domain> --name api --resource-group rg-bayubai --environment $(az containerapp env list --resource-group rg-bayubai --query "[0].name" --output tsv) --validation-method CNAME`
 4. Find the certificate name:
-   - `az containerapp env certificate list --name <environment> --resource-group rg-carenest --managed-certificates-only --query "[?properties.subjectName=='api.<domain>'].name" --output tsv`
+   - `az containerapp env certificate list --name <environment> --resource-group rg-bayubai --managed-certificates-only --query "[?properties.subjectName=='api.<domain>'].name" --output tsv`
    - store it: `gh variable set DEPLOY_API_CERTIFICATE --env production --body <name>`.
 5. Set `Deploy:CustomDomain` to `true`, regenerate `infra/` and merge. From then on every deploy keeps the binding.
    - Merge nothing else between steps 3 and 5: a deploy without the flag drops the hostname.
 
 Static Web Apps domains:
-- `CNAME app` pointing at `cn-client`'s default hostname, `CNAME studio` pointing at `cn-studio`'s (`az staticwebapp show --name cn-client --resource-group rg-carenest --query defaultHostname --output tsv`);
-- then `az staticwebapp hostname set --name cn-client --resource-group rg-carenest --hostname app.<domain>`, and the same for `studio`.
+- `CNAME app` pointing at `bb-client`'s default hostname, `CNAME studio` pointing at `bb-studio`'s (`az staticwebapp show --name bb-client --resource-group rg-bayubai --query defaultHostname --output tsv`);
+- then `az staticwebapp hostname set --name bb-client --resource-group rg-bayubai --hostname app.<domain>`, and the same for `studio`.
 
 ## Aspire version bumps
 

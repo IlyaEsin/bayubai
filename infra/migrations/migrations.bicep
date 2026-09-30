@@ -1,9 +1,9 @@
 @description('The location for the resource(s) to be deployed.')
 param location string = resourceGroup().location
 
-param cn_outputs_azure_container_apps_environment_default_domain string
+param bb_outputs_azure_container_apps_environment_default_domain string
 
-param cn_outputs_azure_container_apps_environment_id string
+param bb_outputs_azure_container_apps_environment_id string
 
 param migrations_containerimage string
 
@@ -22,16 +22,16 @@ param insights_outputs_appinsightsconnectionstring string
 
 param migrations_identity_outputs_clientid string
 
-param cn_outputs_azure_container_registry_endpoint string
+param bb_outputs_azure_container_registry_endpoint string
 
-param cn_outputs_azure_container_registry_managed_identity_id string
+param bb_outputs_azure_container_registry_managed_identity_id string
 
 resource secrets 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: key_vault
 }
 
-resource secrets_connectionstrings__carenest 'Microsoft.KeyVault/vaults/secrets@2024-11-01' existing = {
-  name: 'connectionstrings--carenest'
+resource secrets_connectionstrings__bayubai 'Microsoft.KeyVault/vaults/secrets@2024-11-01' existing = {
+  name: 'connectionstrings--bayubai'
   parent: secrets
 }
 
@@ -42,16 +42,16 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
     configuration: {
       secrets: [
         {
-          name: 'connectionstrings--carenest'
+          name: 'connectionstrings--bayubai'
           identity: migrations_identity_outputs_id
-          keyVaultUrl: secrets_connectionstrings__carenest.properties.secretUri
+          keyVaultUrl: secrets_connectionstrings__bayubai.properties.secretUri
         }
         {
-          name: 'carenest-uri'
-          value: 'postgresql://${uriComponent(postgres_user_value)}:${uriComponent(postgres_password_value)}@${postgres_outputs_hostname}/carenest'
+          name: 'bayubai-uri'
+          value: 'postgresql://${uriComponent(postgres_user_value)}:${uriComponent(postgres_password_value)}@${postgres_outputs_hostname}/bayubai'
         }
         {
-          name: 'carenest-password'
+          name: 'bayubai-password'
           value: postgres_password_value
         }
       ]
@@ -59,12 +59,12 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
       replicaTimeout: 1800
       registries: [
         {
-          server: cn_outputs_azure_container_registry_endpoint
-          identity: cn_outputs_azure_container_registry_managed_identity_id
+          server: bb_outputs_azure_container_registry_endpoint
+          identity: bb_outputs_azure_container_registry_managed_identity_id
         }
       ]
     }
-    environmentId: cn_outputs_azure_container_apps_environment_id
+    environmentId: bb_outputs_azure_container_apps_environment_id
     template: {
       containers: [
         {
@@ -76,36 +76,36 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
               value: 'in_memory'
             }
             {
-              name: 'ConnectionStrings__carenest'
-              secretRef: 'connectionstrings--carenest'
+              name: 'ConnectionStrings__bayubai'
+              secretRef: 'connectionstrings--bayubai'
             }
             {
-              name: 'CARENEST_HOST'
+              name: 'BAYUBAI_HOST'
               value: postgres_outputs_hostname
             }
             {
-              name: 'CARENEST_PORT'
+              name: 'BAYUBAI_PORT'
               value: '5432'
             }
             {
-              name: 'CARENEST_URI'
-              secretRef: 'carenest-uri'
+              name: 'BAYUBAI_URI'
+              secretRef: 'bayubai-uri'
             }
             {
-              name: 'CARENEST_JDBCCONNECTIONSTRING'
-              value: 'jdbc:postgresql://${postgres_outputs_hostname}/carenest?sslmode=require&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin'
+              name: 'BAYUBAI_JDBCCONNECTIONSTRING'
+              value: 'jdbc:postgresql://${postgres_outputs_hostname}/bayubai?sslmode=require&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin'
             }
             {
-              name: 'CARENEST_USERNAME'
+              name: 'BAYUBAI_USERNAME'
               value: postgres_user_value
             }
             {
-              name: 'CARENEST_PASSWORD'
-              secretRef: 'carenest-password'
+              name: 'BAYUBAI_PASSWORD'
+              secretRef: 'bayubai-password'
             }
             {
-              name: 'CARENEST_DATABASENAME'
-              value: 'carenest'
+              name: 'BAYUBAI_DATABASENAME'
+              value: 'bayubai'
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
@@ -128,7 +128,7 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
     type: 'UserAssigned'
     userAssignedIdentities: {
       '${migrations_identity_outputs_id}': { }
-      '${cn_outputs_azure_container_registry_managed_identity_id}': { }
+      '${bb_outputs_azure_container_registry_managed_identity_id}': { }
     }
   }
 }

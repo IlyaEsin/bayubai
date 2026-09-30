@@ -1,5 +1,5 @@
-import { ApiProblem } from '@carenest/api-client';
-import { createI18n } from '@carenest/i18n';
+import { ApiProblem } from '@bayubai/api-client';
+import { createI18n } from '@bayubai/i18n';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';

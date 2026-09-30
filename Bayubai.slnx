@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Bayubai.Api/Bayubai.Api.csproj" />
+    <Project Path="src/Bayubai.AppHost/Bayubai.AppHost.csproj" />
+    <Project Path="src/Bayubai.MigrationService/Bayubai.MigrationService.csproj" />
+    <Project Path="src/Bayubai.ServiceDefaults/Bayubai.ServiceDefaults.csproj" />
+    <Project Path="src/Bayubai.SharedKernel/Bayubai.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Bayubai.Identity/Bayubai.Identity.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Bayubai.Api.IntegrationTests/Bayubai.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Bayubai.ArchitectureTests/Bayubai.ArchitectureTests.csproj" />
+    <Project Path="tests/Bayubai.Identity.Tests/Bayubai.Identity.Tests.csproj" />
+    <Project Path="tests/Bayubai.SharedKernel.Tests/Bayubai.SharedKernel.Tests.csproj" />
+  </Folder>
+</Solution>

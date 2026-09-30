@@ -1,5 +1,5 @@
-import { useListMyConsultants } from '@carenest/api-client';
-import { Card, ErrorAlert, PageTitle, SectionTitle, useMe } from '@carenest/ui';
+import { useListMyConsultants } from '@bayubai/api-client';
+import { Card, ErrorAlert, PageTitle, SectionTitle, useMe } from '@bayubai/ui';
 import { useTranslation } from 'react-i18next';
 import { ConsultantCard } from './ConsultantCard';
 

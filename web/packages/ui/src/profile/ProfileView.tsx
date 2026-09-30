@@ -1,5 +1,5 @@
-import { getGetMeQueryKey, useDeleteMe, useGetProviders, useUpdateMe, type MeResponse } from '@carenest/api-client';
-import { detectTimeZone, languages, toLanguage } from '@carenest/i18n';
+import { getGetMeQueryKey, useDeleteMe, useGetProviders, useUpdateMe, type MeResponse } from '@bayubai/api-client';
+import { detectTimeZone, languages, toLanguage } from '@bayubai/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';

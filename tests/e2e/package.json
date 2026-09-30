@@ -1,5 +1,5 @@
 {
-  "name": "carenest-e2e",
+  "name": "bayubai-e2e",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.34.5",

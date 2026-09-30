@@ -1,4 +1,4 @@
-import { CompleteExternalSignIn, PublicShell } from '@carenest/ui';
+import { CompleteExternalSignIn, PublicShell } from '@bayubai/ui';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/auth/external')({

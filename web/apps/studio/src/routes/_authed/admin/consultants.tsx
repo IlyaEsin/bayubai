@@ -1,4 +1,4 @@
-import { hasRole, loadSession, roles } from '@carenest/ui';
+import { hasRole, loadSession, roles } from '@bayubai/ui';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { CreateConsultantForm } from '../../../admin/CreateConsultantForm';
 

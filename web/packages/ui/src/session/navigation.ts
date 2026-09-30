@@ -1,4 +1,4 @@
-import { apiUrl, getStartExternalSignInUrl } from '@carenest/api-client';
+import { apiUrl, getStartExternalSignInUrl } from '@bayubai/api-client';
 
 export type SignInMode = 'signin' | 'link';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@carenest/api-client",
+  "name": "@bayubai/api-client",
   "private": true,
   "type": "module",
   "exports": {

@@ -1,4 +1,4 @@
-import { Card, PageTitle, SectionTitle, hasRole, roles, useMe } from '@carenest/ui';
+import { Card, PageTitle, SectionTitle, hasRole, roles, useMe } from '@bayubai/ui';
 import { createFileRoute } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { ClientsList } from '../../dashboard/ClientsList';

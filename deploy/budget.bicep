@@ -4,7 +4,7 @@ param amount int = 40
 param email string
 
 resource budget 'Microsoft.Consumption/budgets@2024-08-01' = {
-  name: 'cn-monthly'
+  name: 'bb-monthly'
   properties: {
     amount: amount
     category: 'Cost'

@@ -1,6 +1,6 @@
-import { useListInvitations, type MeResponse } from '@carenest/api-client';
-import { formatDateTime } from '@carenest/i18n';
-import { Card, ErrorAlert, SectionTitle } from '@carenest/ui';
+import { useListInvitations, type MeResponse } from '@bayubai/api-client';
+import { formatDateTime } from '@bayubai/i18n';
+import { Card, ErrorAlert, SectionTitle } from '@bayubai/ui';
 import { useTranslation } from 'react-i18next';
 
 // Times are shown in the consultant's own profile zone.

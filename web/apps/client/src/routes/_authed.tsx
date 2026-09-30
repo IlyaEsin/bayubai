@@ -1,4 +1,4 @@
-import { AppShell, loadSession, navLinkClass } from '@carenest/ui';
+import { AppShell, loadSession, navLinkClass } from '@bayubai/ui';
 import { Link, Outlet, createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 

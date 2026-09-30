@@ -24,7 +24,7 @@ test('the sign-in page speaks the browser language before sign-in', async ({ bro
 
   await page.goto(`${clientUrl}/sign-in`);
 
-  await expect(page.getByRole('heading', { name: 'Вход в CareNest' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Вход в Баюбай' })).toBeVisible();
 });
 
 test('the theme follows the system and remembers an explicit choice', async ({ browser }) => {

@@ -49,8 +49,8 @@ resource postgreSqlFirewallRule_AllowAllAzureIps 'Microsoft.DBforPostgreSQL/flex
   parent: postgres
 }
 
-resource carenest 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = {
-  name: 'carenest'
+resource bayubai 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = {
+  name: 'bayubai'
   parent: postgres
 }
 
@@ -66,10 +66,10 @@ resource connectionString 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
   parent: keyVault
 }
 
-resource carenest_connectionString 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  name: 'connectionstrings--carenest'
+resource bayubai_connectionString 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
+  name: 'connectionstrings--bayubai'
   properties: {
-    value: 'Host=${postgres.properties.fullyQualifiedDomainName};Username=${administratorLogin};Password=${administratorLoginPassword};Database=carenest'
+    value: 'Host=${postgres.properties.fullyQualifiedDomainName};Username=${administratorLogin};Password=${administratorLoginPassword};Database=bayubai'
   }
   parent: keyVault
 }

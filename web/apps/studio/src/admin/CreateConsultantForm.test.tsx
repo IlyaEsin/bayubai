@@ -1,6 +1,6 @@
-import type { MeResponse } from '@carenest/api-client';
-import { createQueryClient, meQuery } from '@carenest/ui';
-import { renderWithProviders, server, testApi } from '@carenest/ui/testing';
+import type { MeResponse } from '@bayubai/api-client';
+import { createQueryClient, meQuery } from '@bayubai/ui';
+import { renderWithProviders, server, testApi } from '@bayubai/ui/testing';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';

@@ -7,7 +7,7 @@ export type ResolvedTheme = 'light' | 'dark';
 export const themePreferences: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
 // The same key is read by the inline script in each app's index.html before the first paint.
-export const themeStorageKey = 'cn.theme';
+export const themeStorageKey = 'bb.theme';
 
 const darkQuery = '(prefers-color-scheme: dark)';
 

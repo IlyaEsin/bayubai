@@ -1,5 +1,5 @@
-import { getListMyConsultantsQueryKey, useAcceptInvitation } from '@carenest/api-client';
-import { Button, Card, ErrorAlert, SectionTitle } from '@carenest/ui';
+import { getListMyConsultantsQueryKey, useAcceptInvitation } from '@bayubai/api-client';
+import { Button, Card, ErrorAlert, SectionTitle } from '@bayubai/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

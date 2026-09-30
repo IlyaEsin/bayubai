@@ -1,6 +1,6 @@
-import type { ConsultantResponse } from '@carenest/api-client';
-import { formatLocalTime } from '@carenest/i18n';
-import { Card, SectionTitle, useNow } from '@carenest/ui';
+import type { ConsultantResponse } from '@bayubai/api-client';
+import { formatLocalTime } from '@bayubai/i18n';
+import { Card, SectionTitle, useNow } from '@bayubai/ui';
 import { useTranslation } from 'react-i18next';
 
 // The consultant may live in another zone, so the parent sees her local time before writing late at night.

@@ -1,4 +1,4 @@
-import { ApiProblem } from '@carenest/api-client';
+import { ApiProblem } from '@bayubai/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { i18n } from 'i18next';
 import { useEffect, type ReactNode } from 'react';
