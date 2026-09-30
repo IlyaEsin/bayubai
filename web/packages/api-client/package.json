@@ -11,10 +11,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tanstack/react-query": "5.103.2",
+    "@tanstack/react-query": "5.104.0",
     "react": "19.3.0"
   },
   "devDependencies": {
-    "orval": "8.37.0"
+    "orval": "8.38.0"
   }
 }
