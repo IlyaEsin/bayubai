@@ -7,53 +7,53 @@
 
 /* Default palette from the pilot consultant's site; another consultant gets a theme by overriding these tokens. */
 :root {
-  --cn-background: #ffffff;
-  --cn-surface: #ffffff;
-  --cn-muted: #ebebeb;
-  --cn-soft: #ffd8c4;
-  --cn-foreground: #222222;
-  --cn-muted-foreground: #5b5350;
-  --cn-accent: #ff4551;
-  --cn-accent-foreground: #ffffff;
-  --cn-secondary: #c7a18e;
-  --cn-strong: #451619;
-  --cn-border: #e3d8d3;
-  --cn-danger: #b3261e;
-  --cn-success: #2e7d32;
+  --bb-background: #ffffff;
+  --bb-surface: #ffffff;
+  --bb-muted: #ebebeb;
+  --bb-soft: #ffd8c4;
+  --bb-foreground: #222222;
+  --bb-muted-foreground: #5b5350;
+  --bb-accent: #ff4551;
+  --bb-accent-foreground: #ffffff;
+  --bb-secondary: #c7a18e;
+  --bb-strong: #451619;
+  --bb-border: #e3d8d3;
+  --bb-danger: #b3261e;
+  --bb-success: #2e7d32;
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --cn-background: #16100f;
-  --cn-surface: #221a18;
-  --cn-muted: #2e2522;
-  --cn-soft: #3b2521;
-  --cn-foreground: #f4ece8;
-  --cn-muted-foreground: #bcaea8;
-  --cn-accent: #ff5c67;
-  --cn-accent-foreground: #1c0b0c;
-  --cn-secondary: #a88676;
-  --cn-strong: #ffd8c4;
-  --cn-border: #3d302c;
-  --cn-danger: #ff8a80;
-  --cn-success: #81c784;
+  --bb-background: #16100f;
+  --bb-surface: #221a18;
+  --bb-muted: #2e2522;
+  --bb-soft: #3b2521;
+  --bb-foreground: #f4ece8;
+  --bb-muted-foreground: #bcaea8;
+  --bb-accent: #ff5c67;
+  --bb-accent-foreground: #1c0b0c;
+  --bb-secondary: #a88676;
+  --bb-strong: #ffd8c4;
+  --bb-border: #3d302c;
+  --bb-danger: #ff8a80;
+  --bb-success: #81c784;
   color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--cn-background);
-  --color-surface: var(--cn-surface);
-  --color-muted: var(--cn-muted);
-  --color-soft: var(--cn-soft);
-  --color-foreground: var(--cn-foreground);
-  --color-muted-foreground: var(--cn-muted-foreground);
-  --color-accent: var(--cn-accent);
-  --color-accent-foreground: var(--cn-accent-foreground);
-  --color-secondary: var(--cn-secondary);
-  --color-strong: var(--cn-strong);
-  --color-border: var(--cn-border);
-  --color-danger: var(--cn-danger);
-  --color-success: var(--cn-success);
+  --color-background: var(--bb-background);
+  --color-surface: var(--bb-surface);
+  --color-muted: var(--bb-muted);
+  --color-soft: var(--bb-soft);
+  --color-foreground: var(--bb-foreground);
+  --color-muted-foreground: var(--bb-muted-foreground);
+  --color-accent: var(--bb-accent);
+  --color-accent-foreground: var(--bb-accent-foreground);
+  --color-secondary: var(--bb-secondary);
+  --color-strong: var(--bb-strong);
+  --color-border: var(--bb-border);
+  --color-danger: var(--bb-danger);
+  --color-success: var(--bb-success);
   --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 

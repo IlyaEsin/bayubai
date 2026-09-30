@@ -1,6 +1,6 @@
-import { configureApi } from '@carenest/api-client';
-import { createI18n, detectBrowserLanguage } from '@carenest/i18n';
-import { AppProviders, createQueryClient, NotFound, RouteError } from '@carenest/ui';
+import { configureApi } from '@bayubai/api-client';
+import { createI18n, detectBrowserLanguage } from '@bayubai/i18n';
+import { AppProviders, createQueryClient, NotFound, RouteError } from '@bayubai/ui';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

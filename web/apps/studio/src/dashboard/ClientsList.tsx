@@ -1,6 +1,6 @@
-import { useListClients, type MeResponse } from '@carenest/api-client';
-import { formatDateTime, formatLocalTime } from '@carenest/i18n';
-import { Card, ErrorAlert, SectionTitle, useNow } from '@carenest/ui';
+import { useListClients, type MeResponse } from '@bayubai/api-client';
+import { formatDateTime, formatLocalTime } from '@bayubai/i18n';
+import { Card, ErrorAlert, SectionTitle, useNow } from '@bayubai/ui';
 import { useTranslation } from 'react-i18next';
 
 // Clients may live in other zones and read another language: "since" is in the consultant's zone, "local time" in the client's.

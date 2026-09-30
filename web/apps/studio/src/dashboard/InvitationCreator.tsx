@@ -1,6 +1,6 @@
-import { getListInvitationsQueryKey, useCreateInvitation, type MeResponse } from '@carenest/api-client';
-import { formatDateTime } from '@carenest/i18n';
-import { Button, Card, ErrorAlert, Input, SectionTitle, useNow } from '@carenest/ui';
+import { getListInvitationsQueryKey, useCreateInvitation, type MeResponse } from '@bayubai/api-client';
+import { formatDateTime } from '@bayubai/i18n';
+import { Button, Card, ErrorAlert, Input, SectionTitle, useNow } from '@bayubai/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

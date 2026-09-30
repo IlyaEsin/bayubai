@@ -1,4 +1,4 @@
-import { createI18n } from '@carenest/i18n';
+import { createI18n } from '@bayubai/i18n';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
 import { describe, expect, it } from 'vitest';

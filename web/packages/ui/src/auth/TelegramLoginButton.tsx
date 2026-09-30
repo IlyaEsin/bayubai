@@ -1,5 +1,5 @@
-import { useCompleteTelegramSignIn, type TelegramCompleteRequestAuth } from '@carenest/api-client';
-import { detectTimeZone, toLanguage } from '@carenest/i18n';
+import { useCompleteTelegramSignIn, type TelegramCompleteRequestAuth } from '@bayubai/api-client';
+import { detectTimeZone, toLanguage } from '@bayubai/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';

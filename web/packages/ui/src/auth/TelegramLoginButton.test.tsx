@@ -7,11 +7,11 @@ import { TelegramLoginButton, telegramWidgetUrl } from './TelegramLoginButton';
 
 describe('TelegramLoginButton', () => {
   it('loads the widget for the configured bot', () => {
-    const { container } = renderWithProviders(<TelegramLoginButton botName="carenest_bot" mode="signin" onSignedIn={vi.fn()} />);
+    const { container } = renderWithProviders(<TelegramLoginButton botName="bayubai_bot" mode="signin" onSignedIn={vi.fn()} />);
 
     const script = container.querySelector('script');
     expect(script).toHaveAttribute('src', telegramWidgetUrl);
-    expect(script).toHaveAttribute('data-telegram-login', 'carenest_bot');
+    expect(script).toHaveAttribute('data-telegram-login', 'bayubai_bot');
     expect(script).toHaveAttribute('data-onauth', 'cnTelegramAuth(user)');
   });
 
@@ -24,7 +24,7 @@ describe('TelegramLoginButton', () => {
       }),
     );
     const onSignedIn = vi.fn();
-    renderWithProviders(<TelegramLoginButton botName="carenest_bot" mode="link" onSignedIn={onSignedIn} />);
+    renderWithProviders(<TelegramLoginButton botName="bayubai_bot" mode="link" onSignedIn={onSignedIn} />);
 
     window.cnTelegramAuth?.({ id: 42, first_name: 'Anna', auth_date: 1767603600, hash: 'abc' });
 
@@ -33,7 +33,7 @@ describe('TelegramLoginButton', () => {
   });
 
   it('removes the global callback on unmount', () => {
-    const { unmount } = renderWithProviders(<TelegramLoginButton botName="carenest_bot" mode="signin" onSignedIn={vi.fn()} />);
+    const { unmount } = renderWithProviders(<TelegramLoginButton botName="bayubai_bot" mode="signin" onSignedIn={vi.fn()} />);
 
     expect(window.cnTelegramAuth).toBeDefined();
 

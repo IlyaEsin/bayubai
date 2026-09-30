@@ -1,4 +1,4 @@
-import { renderWithProviders } from '@carenest/ui/testing';
+import { renderWithProviders } from '@bayubai/ui/testing';
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ConsultantCard } from './ConsultantCard';

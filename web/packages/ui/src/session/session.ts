@@ -1,4 +1,4 @@
-import { ApiProblem, getGetMeQueryKey, getMe, type MeResponse, useSignOut as useSignOutMutation } from '@carenest/api-client';
+import { ApiProblem, getGetMeQueryKey, getMe, type MeResponse, useSignOut as useSignOutMutation } from '@bayubai/api-client';
 import { queryOptions, useQueryClient, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 
 export const roles = {

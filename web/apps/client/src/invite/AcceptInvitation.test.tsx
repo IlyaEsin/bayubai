@@ -1,4 +1,4 @@
-import { renderWithProviders, server, testApi } from '@carenest/ui/testing';
+import { renderWithProviders, server, testApi } from '@bayubai/ui/testing';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';

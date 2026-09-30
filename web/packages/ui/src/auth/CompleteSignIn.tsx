@@ -1,4 +1,4 @@
-import { ApiProblem, useCompleteEmailSignIn } from '@carenest/api-client';
+import { ApiProblem, useCompleteEmailSignIn } from '@bayubai/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

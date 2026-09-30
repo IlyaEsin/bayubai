@@ -63,7 +63,7 @@ describe('SignInPanel', () => {
   });
 
   it('sanitizes a hostile next path before handing it to onSignedIn after a Telegram sign-in', async () => {
-    providers(['email', 'Telegram'], 'carenest_bot');
+    providers(['email', 'Telegram'], 'bayubai_bot');
     server.use(http.post(`${testApi}/api/identity/telegram/complete`, () => new HttpResponse(null, { status: 204 })));
     const onSignedIn = vi.fn();
     renderWithProviders(<SignInPanel next="https://evil.example" onSignedIn={onSignedIn} />);

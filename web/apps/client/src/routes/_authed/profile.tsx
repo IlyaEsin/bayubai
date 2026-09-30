@@ -1,4 +1,4 @@
-import { ProfileView } from '@carenest/ui';
+import { ProfileView } from '@bayubai/ui';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authed/profile')({

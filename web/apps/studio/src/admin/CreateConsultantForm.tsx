@@ -1,5 +1,5 @@
-import { useCreateConsultant } from '@carenest/api-client';
-import { languages } from '@carenest/i18n';
+import { useCreateConsultant } from '@bayubai/api-client';
+import { languages } from '@bayubai/i18n';
 import {
   Alert,
   Button,
@@ -14,7 +14,7 @@ import {
   invalidFields,
   timeZoneListId,
   useMe,
-} from '@carenest/ui';
+} from '@bayubai/ui';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,4 +1,4 @@
-import { ApiProblem } from '@carenest/api-client';
+import { ApiProblem } from '@bayubai/api-client';
 import type { i18n } from 'i18next';
 
 // Prefers the API's error code, then a status message, so status-only answers (middleware 401, 500) still read well.

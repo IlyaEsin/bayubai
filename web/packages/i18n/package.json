@@ -1,5 +1,5 @@
 {
-  "name": "@carenest/i18n",
+  "name": "@bayubai/i18n",
   "private": true,
   "type": "module",
   "exports": {
@@ -14,6 +14,6 @@
     "react-i18next": "17.0.15"
   },
   "devDependencies": {
-    "@carenest/api-client": "workspace:*"
+    "@bayubai/api-client": "workspace:*"
   }
 }

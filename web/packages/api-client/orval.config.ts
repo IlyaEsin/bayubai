@@ -1,7 +1,7 @@
 import { defineConfig } from 'orval';
 
 export default defineConfig({
-  carenest: {
+  bayubai: {
     input: { target: './openapi.json' },
     output: {
       target: './src/generated/endpoints.ts',

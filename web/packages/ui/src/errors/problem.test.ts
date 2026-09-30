@@ -1,5 +1,5 @@
-import { ApiProblem } from '@carenest/api-client';
-import { createI18n } from '@carenest/i18n';
+import { ApiProblem } from '@bayubai/api-client';
+import { createI18n } from '@bayubai/i18n';
 import { describe, expect, it } from 'vitest';
 import { invalidFields, problemMessage } from './problem';
 

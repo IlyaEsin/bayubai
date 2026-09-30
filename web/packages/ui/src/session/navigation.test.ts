@@ -1,4 +1,4 @@
-import { configureApi } from '@carenest/api-client';
+import { configureApi } from '@bayubai/api-client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { emailCallbackUrl, externalSignInUrl, safeNext } from './navigation';
 
