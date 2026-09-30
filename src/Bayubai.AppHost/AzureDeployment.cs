@@ -15,7 +15,7 @@ internal static class AzureDeployment
         var postgresPassword = builder.AddParameterFromConfiguration("postgres-password", "Deploy:PostgresPassword", secret: true);
 
         // The hosted Aspire dashboard would be another public surface and cost; Application Insights covers production.
-        builder.AddAzureContainerAppEnvironment("cn").WithDashboard(false);
+        builder.AddAzureContainerAppEnvironment("bb").WithDashboard(false);
         var vault = builder.AddAzureKeyVault("secrets").PublishAsExisting(vaultName, null);
         var insights = builder.AddAzureApplicationInsights("insights");
         var database = builder.AddAzurePostgresFlexibleServer("postgres")
@@ -35,7 +35,7 @@ internal static class AzureDeployment
             .WithEnvironment("Frontend__Origins__1", ReferenceExpression.Create($"https://studio.{domain}"))
             .WithEnvironment("Frontend__ClientAppUrl", ReferenceExpression.Create($"https://app.{domain}"))
             .WithEnvironment("Identity__AdminEmails__0", vault.GetSecret("admin-email"))
-            .WithEnvironment("Email__From", ReferenceExpression.Create($"Bayubai <no-reply@{domain}>"))
+            .WithEnvironment("Email__From", ReferenceExpression.Create($"Баюбай <no-reply@{domain}>"))
             .WithEnvironment("Email__Host", "smtp-relay.brevo.com")
             .WithEnvironment("Email__Port", "587")
             .WithEnvironment("Email__UseStartTls", "true")

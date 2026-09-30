@@ -18,20 +18,20 @@ resource rg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   location: location
 }
 
-module cn_acr 'cn-acr/cn-acr.bicep' = {
-  name: 'cn-acr'
+module bb_acr 'bb-acr/bb-acr.bicep' = {
+  name: 'bb-acr'
   scope: rg
   params: {
     location: location
   }
 }
 
-module cn 'cn/cn.bicep' = {
-  name: 'cn'
+module bb 'bb/bb.bicep' = {
+  name: 'bb'
   scope: rg
   params: {
     location: location
-    cn_acr_outputs_name: cn_acr.outputs.name
+    bb_acr_outputs_name: bb_acr.outputs.name
     userPrincipalId: principalId
   }
 }
@@ -108,13 +108,13 @@ module api_roles_secrets 'api-roles-secrets/api-roles-secrets.bicep' = {
   }
 }
 
-output cn_AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN string = cn.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN
+output bb_AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN string = bb.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN
 
-output cn_AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = cn.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_ID
+output bb_AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = bb.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_ID
 
-output cn_AZURE_CONTAINER_REGISTRY_ENDPOINT string = cn.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
+output bb_AZURE_CONTAINER_REGISTRY_ENDPOINT string = bb.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
 
-output cn_AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID string = cn.outputs.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID
+output bb_AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID string = bb.outputs.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID
 
 output migrations_identity_id string = migrations_identity.outputs.id
 

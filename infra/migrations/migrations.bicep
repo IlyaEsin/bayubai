@@ -1,9 +1,9 @@
 @description('The location for the resource(s) to be deployed.')
 param location string = resourceGroup().location
 
-param cn_outputs_azure_container_apps_environment_default_domain string
+param bb_outputs_azure_container_apps_environment_default_domain string
 
-param cn_outputs_azure_container_apps_environment_id string
+param bb_outputs_azure_container_apps_environment_id string
 
 param migrations_containerimage string
 
@@ -22,9 +22,9 @@ param insights_outputs_appinsightsconnectionstring string
 
 param migrations_identity_outputs_clientid string
 
-param cn_outputs_azure_container_registry_endpoint string
+param bb_outputs_azure_container_registry_endpoint string
 
-param cn_outputs_azure_container_registry_managed_identity_id string
+param bb_outputs_azure_container_registry_managed_identity_id string
 
 resource secrets 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: key_vault
@@ -59,12 +59,12 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
       replicaTimeout: 1800
       registries: [
         {
-          server: cn_outputs_azure_container_registry_endpoint
-          identity: cn_outputs_azure_container_registry_managed_identity_id
+          server: bb_outputs_azure_container_registry_endpoint
+          identity: bb_outputs_azure_container_registry_managed_identity_id
         }
       ]
     }
-    environmentId: cn_outputs_azure_container_apps_environment_id
+    environmentId: bb_outputs_azure_container_apps_environment_id
     template: {
       containers: [
         {
@@ -128,7 +128,7 @@ resource migrations 'Microsoft.App/jobs@2025-07-01' = {
     type: 'UserAssigned'
     userAssignedIdentities: {
       '${migrations_identity_outputs_id}': { }
-      '${cn_outputs_azure_container_registry_managed_identity_id}': { }
+      '${bb_outputs_azure_container_registry_managed_identity_id}': { }
     }
   }
 }

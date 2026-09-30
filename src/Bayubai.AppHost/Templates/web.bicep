@@ -2,14 +2,14 @@
 param location string = resourceGroup().location
 
 resource client 'Microsoft.Web/staticSites@2024-04-01' = {
-  name: 'cn-client'
+  name: 'bb-client'
   location: location
   sku: { name: 'Free', tier: 'Free' }
   properties: {}
 }
 
 resource studio 'Microsoft.Web/staticSites@2024-04-01' = {
-  name: 'cn-studio'
+  name: 'bb-studio'
   location: location
   sku: { name: 'Free', tier: 'Free' }
   properties: {}

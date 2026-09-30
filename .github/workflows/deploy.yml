@@ -126,7 +126,7 @@ jobs:
         id: swa
         run: |
           for app in client studio; do
-            token=$(az staticwebapp secrets list --name "cn-$app" --resource-group "$Azure__ResourceGroup" --query properties.apiKey --output tsv)
+            token=$(az staticwebapp secrets list --name "bb-$app" --resource-group "$Azure__ResourceGroup" --query properties.apiKey --output tsv)
             echo "::add-mask::$token"
             echo "$app=$token" >> "$GITHUB_OUTPUT"
           done

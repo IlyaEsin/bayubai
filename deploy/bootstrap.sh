@@ -10,12 +10,12 @@ subscription="${1:?usage: bootstrap.sh <subscription-id> <domain> <budget-email>
 domain="${2:?usage: bootstrap.sh <subscription-id> <domain> <budget-email>}"
 budget_email="${3:?usage: bootstrap.sh <subscription-id> <domain> <budget-email>}"
 
-repo="IlyaEsin/carenest"
+repo="IlyaEsin/bayubai"
 location="westeurope"
-resource_group="rg-carenest"
+resource_group="rg-bayubai"
 # Key Vault names are global; the suffix keeps the name stable for this subscription.
-vault="kv-carenest-$(printf '%s' "$subscription" | sha256sum | cut -c1-6)"
-deploy_app="carenest-deploy"
+vault="kv-bayubai-$(printf '%s' "$subscription" | sha256sum | cut -c1-6)"
+deploy_app="bayubai-deploy"
 
 az account set --subscription "$subscription"
 tenant=$(tsv az account show --query tenantId --output tsv)
