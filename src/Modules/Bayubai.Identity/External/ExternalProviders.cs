@@ -20,10 +20,10 @@ internal static class ExternalProviders
     public const string Telegram = "Telegram";
     public const string TestingEnvironment = "Testing";
 
-    public const string ReturnUrlItem = "cn.returnUrl";
-    public const string ModeItem = "cn.mode";
-    public const string LanguageItem = "cn.language";
-    public const string TimeZoneItem = "cn.timeZone";
+    public const string ReturnUrlItem = "bb.returnUrl";
+    public const string ModeItem = "bb.mode";
+    public const string LanguageItem = "bb.language";
+    public const string TimeZoneItem = "bb.timeZone";
 
     public static IReadOnlyList<string> OAuth { get; } = [Google, Yandex, VkId, Fake];
 

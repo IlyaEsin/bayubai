@@ -8,7 +8,7 @@
     <script>
       // Applies the saved or system theme before the first paint.
       try {
-        var saved = localStorage.getItem('cn.theme');
+        var saved = localStorage.getItem('bb.theme');
         var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
       } catch (error) {

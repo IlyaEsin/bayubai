@@ -9,7 +9,7 @@ import type { SignInMode } from '../session/navigation';
 
 declare global {
   interface Window {
-    cnTelegramAuth?: (auth: TelegramCompleteRequestAuth) => void;
+    bbTelegramAuth?: (auth: TelegramCompleteRequestAuth) => void;
   }
 }
 
@@ -46,18 +46,18 @@ export function TelegramLoginButton({ botName, mode, onSignedIn }: TelegramLogin
       return;
     }
 
-    window.cnTelegramAuth = (auth) => onAuth(auth);
+    window.bbTelegramAuth = (auth) => onAuth(auth);
     const script = document.createElement('script');
     script.src = telegramWidgetUrl;
     script.async = true;
     script.setAttribute('data-telegram-login', botName);
     script.setAttribute('data-size', 'large');
-    script.setAttribute('data-onauth', 'cnTelegramAuth(user)');
+    script.setAttribute('data-onauth', 'bbTelegramAuth(user)');
     element.appendChild(script);
 
     return () => {
       element.replaceChildren();
-      delete window.cnTelegramAuth;
+      delete window.bbTelegramAuth;
     };
   }, [botName]);
 
