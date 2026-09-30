@@ -9,7 +9,8 @@ fi
 
 patterns=$(mktemp)
 trap 'rm -f "$patterns"' EXIT
-printf '%s\n' "$FORBIDDEN_REFERENCES" | sed '/^[[:space:]]*$/d' > "$patterns"
+# A list saved on Windows carries CR line endings, which would make every pattern silently match nothing.
+printf '%s\n' "$FORBIDDEN_REFERENCES" | tr -d '\r' | sed '/^[[:space:]]*$/d' > "$patterns"
 
 found=0
 # Only file names and counts are printed: the matching lines would publish the names; stderr is dropped because git and grep quote a bad pattern there.
