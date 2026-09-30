@@ -103,11 +103,11 @@ public class AccountServiceTests(ApiFactory factory)
         var users = Users(scope);
         var email = $"Consultant-{Guid.NewGuid():N}@Example.Test";
 
-        var created = await accounts.EnsureConsultantAsync(email, "Regina", Russian, CancellationToken.None);
-        var again = await accounts.EnsureConsultantAsync(email.ToLowerInvariant(), "Regina", Russian, CancellationToken.None);
+        var created = await accounts.EnsureConsultantAsync(email, "Anna", Russian, CancellationToken.None);
+        var again = await accounts.EnsureConsultantAsync(email.ToLowerInvariant(), "Anna", Russian, CancellationToken.None);
 
         again.Id.ShouldBe(created.Id);
-        created.DisplayName.ShouldBe("Regina");
+        created.DisplayName.ShouldBe("Anna");
         (await users.GetRolesAsync(created)).ShouldBe(new[] { IdentityRoles.Consultant });
     }
 

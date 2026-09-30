@@ -1,0 +1,35 @@
+name: hygiene
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Free for repositories of personal accounts; organisations would need GITLEAKS_LICENSE.
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
+
+  forbidden-references:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: No forbidden third-party names in files or history
+        env:
+          FORBIDDEN_REFERENCES: ${{ secrets.FORBIDDEN_REFERENCES }}
+        run: bash .github/scripts/forbidden-references.sh

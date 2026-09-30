@@ -50,6 +50,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Identity:Providers:Google:ClientId", "test-google-client");
         builder.UseSetting("Identity:Providers:Google:ClientSecret", "test-google-secret");
         builder.UseSetting("Identity:Providers:Fake:Enabled", "true");
+        // Test clients share one address, so the per-address limit is lifted; a dedicated test covers it.
+        builder.UseSetting("Identity:EmailStartsPerAddressWindow", "100000");
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IClock>(Clock);

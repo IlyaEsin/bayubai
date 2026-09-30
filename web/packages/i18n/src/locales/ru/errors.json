@@ -1,5 +1,6 @@
 {
   "validation_failed": "Проверьте введённые данные",
+  "rate_limited": "Слишком много попыток. Подождите несколько минут и попробуйте снова.",
   "identity.invalid_return_url": "Некорректный адрес возврата",
   "identity.invalid_sign_in_mode": "Некорректный режим входа",
   "identity.provider_unavailable": "Этот способ входа сейчас недоступен",

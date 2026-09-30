@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using CareNest.Identity.Accounts;
 using CareNest.Identity.Domain;
 using CareNest.Identity.Email;
@@ -9,8 +10,10 @@ using CareNest.SharedKernel.Consultants;
 using CareNest.SharedKernel.Web;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,10 +34,18 @@ public static class IdentityModule
     {
         var services = builder.Services;
         services.AddOptions<IdentityModuleOptions>().Bind(builder.Configuration.GetSection(IdentityModuleOptions.Section));
-        services.AddOptions<FrontendOptions>().Bind(builder.Configuration.GetSection(FrontendOptions.Section));
+        services.AddOptions<FrontendOptions>()
+            .Bind(builder.Configuration.GetSection(FrontendOptions.Section))
+            .Validate(frontend => frontend.IsValid(), "Frontend:Origins and Frontend:ClientAppUrl must be absolute http(s) URLs.")
+            .ValidateOnStart();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentConsultant, HttpCurrentConsultant>();
         builder.AddIdentityPersistence();
+
+        // Keys live in the database so sessions and OAuth state survive restarts and are shared by every replica; an explicit store also wins over the Container Apps one.
+        services.AddDataProtection()
+            .SetApplicationName("CareNest")
+            .PersistKeysToDbContext<IdentityModuleDbContext>();
 
         services.AddIdentityCore<User>()
             .AddRoles<IdentityRole<Guid>>()
@@ -63,6 +74,15 @@ public static class IdentityModule
             .PostConfigure<IConfiguration>((email, configuration) =>
                 email.ApplyConnectionString(configuration.GetConnectionString(EmailOptions.ConnectionStringName)));
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+        services.AddRateLimiter(options => options.AddPolicy(EmailSignInEndpoints.StartRateLimit, http =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = http.RequestServices.GetRequiredService<IOptions<IdentityModuleOptions>>().Value.EmailStartsPerAddressWindow,
+                    Window = EmailSignInEndpoints.ThrottleWindow.ToTimeSpan(),
+                })));
         return builder;
     }
 

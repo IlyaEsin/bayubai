@@ -2050,11 +2050,11 @@ public class AccountServiceTests(ApiFactory factory)
         var users = Users(scope);
         var email = $"Consultant-{Guid.NewGuid():N}@Example.Test";
 
-        var created = await accounts.EnsureConsultantAsync(email, "Regina", CancellationToken.None);
-        var again = await accounts.EnsureConsultantAsync(email.ToLowerInvariant(), "Regina", CancellationToken.None);
+        var created = await accounts.EnsureConsultantAsync(email, "Anna", CancellationToken.None);
+        var again = await accounts.EnsureConsultantAsync(email.ToLowerInvariant(), "Anna", CancellationToken.None);
 
         again.Id.ShouldBe(created.Id);
-        created.DisplayName.ShouldBe("Regina");
+        created.DisplayName.ShouldBe("Anna");
         (await users.GetRolesAsync(created)).ShouldBe(new[] { IdentityRoles.Consultant });
     }
 

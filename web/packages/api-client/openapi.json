@@ -619,6 +619,7 @@
           "identity.magic_link_used",
           "identity.not_signed_in",
           "identity.provider_unavailable",
+          "rate_limited",
           "validation_failed"
         ],
         "type": "string"

@@ -6,6 +6,7 @@
   "scripts": {
     "test": "playwright test --project=smoke",
     "walkthrough": "playwright test --project=walkthrough",
+    "how-to-test": "playwright test --project=how-to-test",
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {

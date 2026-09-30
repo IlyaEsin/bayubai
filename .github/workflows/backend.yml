@@ -26,3 +26,11 @@ jobs:
 
       - name: Test
         run: dotnet test CareNest.slnx --no-build --configuration Release
+
+      # infra/ is the reviewable output of the AppHost's Azure model; it must be regenerated and committed with every model change.
+      - name: Committed infra matches the Azure model
+        run: |
+          dotnet tool restore
+          dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra --non-interactive --nologo
+          git diff --exit-code -- infra
+          test -z "$(git status --porcelain -- infra)"

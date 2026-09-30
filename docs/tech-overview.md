@@ -47,6 +47,8 @@ web/
 tests/e2e/          сценарии Playwright (они же живая демонстрация)
 ```
 
+Деплой: `infra/` - Bicep, сгенерированный из модели Aspire (`aspire publish`), коммитится и проверяется в CI; `deploy/` - скрипты разовой подготовки Azure и шагов деплоя (раздел 16).
+
 ## 3. .NET 10 - почему именно 10
 
 .NET 10 - LTS-версия (Long Term Support), то есть версия с длительной поддержкой Microsoft. Это важно: LTS-версии получают обновления безопасности дольше, чем обычные (STS) релизы, и на них можно спокойно строить продукт на годы вперёд, не переезжая каждый год на новую версию.
@@ -86,7 +88,7 @@ PostgreSQL - open source реляционная СУБД. Мы выбрали е
 - **Одна база, схема на модуль**: в этом под-проекте у модуля `Identity` своя PostgreSQL-схема и свой `DbContext` со своими миграциями; когда появятся новые модули, каждый получит свою схему в той же базе.
 - **`jsonb`** - тип для хранения произвольных JSON-данных прямо в таблице с возможностью индексировать и делать запросы внутрь него. Пока не используется, но заложен на будущее - под гибкие шаблоны анкет и правил (сама структура анкет ещё не спроектирована).
 - **NodaTime-плагин Npgsql** (`Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime`) - без него PostgreSQL не умел бы напрямую сохранять типы NodaTime (`Instant`, `LocalDateTime` и т.д.), пришлось бы вручную конвертировать в `DateTime` и обратно (раздел 7).
-- **Managed-вариант в Azure**: в проде (план 3) используется Azure Database for PostgreSQL Flexible Server - управляемая версия той же PostgreSQL, без необходимости самим администрировать сервер (раздел 16).
+- **Managed-вариант в Azure**: в проде используется Azure Database for PostgreSQL Flexible Server - управляемая версия той же PostgreSQL, без необходимости самим администрировать сервер (раздел 16).
 - **Переносимость**: так как всё работает в контейнерах, при необходимости (например, если проблемы с 152-ФЗ или с доступностью Azure из России) базу и всё окружение можно перенести на VPS в РФ - это будет передеплой, а не переписывание кода.
 
 ## 6. EF Core + Npgsql, миграции
@@ -99,7 +101,7 @@ PostgreSQL - open source реляционная СУБД. Мы выбрали е
 dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output-dir Persistence/Migrations --namespace CareNest.Identity.Persistence.Migrations
 ```
 
-**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`CareNest.MigrationService`** (`src/CareNest.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `CareNest.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/CareNest.AppHost/AppHost.cs`) перед стартом `CareNest.Api`; при деплое в Azure миграции точно так же будут отдельным шагом (раздел 16).
+**Почему миграции не запускаются при старте API.** Если приложение само накатывает миграции при запуске, это опасно при масштабировании (несколько экземпляров API могут попытаться мигрировать базу одновременно) и не даёт контролируемо откатить или отследить момент применения миграции в проде. Поэтому у нас есть отдельный процесс - **`CareNest.MigrationService`** (`src/CareNest.MigrationService`), который явно вызывает `MigrateIdentityDatabaseAsync` и применяет миграции до того, как поднимется API. Локально `CareNest.AppHost` запускает его и ждёт завершения (`WaitForCompletion(migrations)`, см. `src/CareNest.AppHost/AppHost.cs`) перед стартом `CareNest.Api`; при деплое в Azure это задание (job) Container Apps `migrations`, которое workflow деплоя запускает и дожидается (раздел 16).
 
 ## 7. NodaTime
 
@@ -120,7 +122,7 @@ dotnet ef migrations add <Name> --project src/Modules/CareNest.Identity --output
 - **Yandex ID** - через OAuth 2.0 (пакет `AspNet.Security.OAuth.Yandex`).
 - **VK ID** - через OAuth 2.1 с PKCE (Proof Key for Code Exchange - защита кода авторизации от перехвата; пакет `AspNet.Security.OAuth.VkId`).
 - **Telegram** - через Login Widget, с проверкой подписи HMAC секретом бота.
-- **Email** - magic link (одноразовая ссылка для входа), живёт 15 минут, одноразовая, отправляется через Azure Communication Services Email в проде и через Mailpit локально (раздел 12).
+- **Email** - magic link (одноразовая ссылка для входа), живёт 15 минут, одноразовая, отправляется по SMTP через Brevo в проде и через Mailpit локально (раздел 12).
 
 Сессии - **cookie**, а не токены в JavaScript: `HttpOnly` (недоступна из JS - защита от XSS), `Secure` (только по HTTPS), `SameSite=Lax` (базовая защита от CSRF). Настройка cookie - в `IdentityModule.ConfigureSessionCookie` (`src/Modules/CareNest.Identity/IdentityModule.cs`). Такой подход требует, чтобы приложения и API были на одном регистрируемом домене (`app.`, `studio.`, `api.` - поддомены одного домена), иначе браузер cookie между ними не пропустит.
 
@@ -179,11 +181,22 @@ Redirect URI (callback), который нужно зарегистрирова�
 
 **.NET Aspire** - набор инструментов Microsoft для локальной разработки распределённых приложений: он поднимает связанные сервисы (базу, очереди, другие процессы) одной командой, настраивает между ними service discovery, прокидывает переменные окружения и даёт единый дашборд с логами и трассировками.
 
-Наш `CareNest.AppHost` (`src/CareNest.AppHost/AppHost.cs`) описывает окружение так:
+`src/CareNest.AppHost/AppHost.cs` выбирает между локальной и азурной моделью по `builder.ExecutionContext.IsPublishMode`:
 
 ```csharp
-var builder = DistributedApplication.CreateBuilder(args);
+if (builder.ExecutionContext.IsPublishMode)
+{
+    builder.AddAzureDeployment();
+}
+else
+{
+    builder.AddLocalStack();
+}
+```
 
+Локальная модель (`src/CareNest.AppHost/LocalStack.cs`) описывает окружение так:
+
+```csharp
 var postgres = builder.AddPostgres("postgres").WithDataVolume();
 var database = postgres.AddDatabase("carenest");
 // Fixed ports so Playwright can read the inbox at a known address.
@@ -193,18 +206,14 @@ var migrations = builder.AddProject<Projects.CareNest_MigrationService>("migrati
     .WithReference(database)
     .WaitFor(database);
 
+// Local demo and e2e only: a one-click test sign-in and a known admin; index 99 leaves user-secrets admins at 0 untouched.
 var api = builder.AddProject<Projects.CareNest_Api>("api")
     .WithReference(database)
     .WithReference(email)
     .WaitFor(database)
-    .WaitForCompletion(migrations);
-
-if (builder.ExecutionContext.IsRunMode)
-{
-    // Local demo and e2e only: a one-click test sign-in and a known admin; index 99 leaves user-secrets admins at 0 untouched.
-    api.WithEnvironment("Identity__Providers__Fake__Enabled", "true")
-        .WithEnvironment("Identity__AdminEmails__99", "admin@carenest.local");
-}
+    .WaitForCompletion(migrations)
+    .WithEnvironment("Identity__Providers__Fake__Enabled", "true")
+    .WithEnvironment("Identity__AdminEmails__99", "admin@carenest.local");
 
 // Ports match Frontend:Origins in the API's appsettings.Development.json.
 var client = builder.AddViteApp("client", "../../web/apps/client")
@@ -219,11 +228,9 @@ builder.AddViteApp("studio", "../../web/apps/studio")
     .WithEndpoint("http", endpoint => endpoint.Port = 5174)
     .WithEnvironment("API_URL", api.GetEndpoint("http"))
     .WaitFor(client);
-
-builder.Build().Run();
 ```
 
-То есть при запуске поднимаются: контейнеры PostgreSQL и Mailpit (у Mailpit фиксированные порты: интерфейс и API на http://localhost:8025), процесс `CareNest.MigrationService`, затем `CareNest.Api`, затем оба веб-приложения: `client` на http://localhost:5173 и `studio` на http://localhost:5174 (пакет `Aspire.Hosting.JavaScript`: он сам выполняет `pnpm install` и запускает `vite`). Только при локальном запуске (не при деплое) AppHost включает тестовый способ входа "тестовый вход" и делает `admin@carenest.local` администратором.
+То есть при запуске поднимаются: контейнеры PostgreSQL и Mailpit (у Mailpit фиксированные порты: интерфейс и API на http://localhost:8025), процесс `CareNest.MigrationService`, затем `CareNest.Api`, затем оба веб-приложения: `client` на http://localhost:5173 и `studio` на http://localhost:5174 (пакет `Aspire.Hosting.JavaScript`: он сам выполняет `pnpm install` и запускает `vite`). Тестовый способ входа "тестовый вход" и `admin@carenest.local` как администратор - часть только этой, локальной модели; при деплое в Azure используется другая модель, `AddAzureDeployment()` (см. «Публикация в Azure» ниже).
 
 Запуск:
 
@@ -235,13 +242,23 @@ dotnet run --project src/CareNest.AppHost
 
 Чем это удобнее docker-compose: docker-compose описывает только контейнеры и их сети, а Aspire ещё и умеет управлять процессами .NET напрямую (без обёртывания в Docker), автоматически прокидывает connection string'и и адреса сервисов друг другу через переменные окружения, и даёт единый экран для логов/трейсов сразу для контейнеров и .NET-процессов вместе - не нужно параллельно смотреть `docker logs` и консоль `dotnet run`.
 
+### Публикация в Azure
+
+У AppHost две модели. При `dotnet run` работает локальная (`LocalStack.cs`): контейнеры, Mailpit, Vite. При `aspire publish` и `aspire deploy` - азурная (`AzureDeployment.cs`): Container Apps, PostgreSQL Flexible Server, Key Vault, Application Insights и два Static Web Apps (раздел 16). `aspire publish` превращает модель в Bicep (декларативный язык описания ресурсов Azure) в папке `infra/`; этот вывод коммитится, чтобы изменение инфраструктуры было видно в pull request, а CI проверяет, что `infra/` совпадает с моделью. Настройки, от которых зависит модель, лежат в `src/CareNest.AppHost/appsettings.json` (раздел `Deploy`), а не в переменных окружения, поэтому `infra/` определяется только закоммиченными файлами.
+
+Aspire CLI закреплён как локальный инструмент (`.config/dotnet-tools.json`): `dotnet tool restore`, затем `dotnet aspire publish --apphost src/CareNest.AppHost/CareNest.AppHost.csproj --output-path infra`.
+
+Официальная документация: https://aspire.dev/deployment/azure/
+
 ## 12. Mailpit
 
 **Mailpit** - фейковый SMTP-сервер с веб-интерфейсом для разработки: приложение отправляет письмо на него как на настоящий SMTP, но письмо никуда за пределы машины не уходит - оно оседает в Mailpit, и его можно посмотреть в браузере.
 
 У нас это значит: письма с magic link при локальной разработке не отправляются реальным получателям - они видны в веб-интерфейсе Mailpit (по умолчанию поднимается Aspire'ом вместе с остальным стеком, см. раздел 11). Это удобно для разработки и e2e-тестов - не нужен реальный email-провайдер и не нужно проверять реальный почтовый ящик.
 
-В продакшене вместо Mailpit используется **Azure Communication Services Email** - управляемый сервис отправки почты (раздел 16).
+В продакшене вместо Mailpit письма отправляет **Brevo** - сервис рассылок (французская компания, данные в ЕС) через свой SMTP-relay `smtp-relay.brevo.com:587` с STARTTLS; бесплатный тариф - 300 писем в день. Код тот же самый `SmtpEmailSender`, меняются только настройки `Email:*`, поэтому другой провайдер - это смена конфигурации. Azure Communication Services Email, который был в спецификации, не взяли: Microsoft выводит его из эксплуатации 30 сентября 2028 года. Чтобы письма не попадали в спам, домен отправителя подтверждается в Brevo DNS-записями (DKIM, DMARC).
+
+Официальная документация: https://developers.brevo.com/docs/smtp-integration
 
 ## 13. Docker
 
@@ -257,6 +274,7 @@ Docker - платформа для запуска приложений в изо
 - **NetArchTest** (`NetArchTest.Rules`) - библиотека для тестов, которые проверяют не поведение кода, а его структуру: например, "ни один класс из модуля Identity, кроме публичного API, не должен быть виден снаружи" (`CareNest.ArchitectureTests`).
 - **FakeClock** (`NodaTime.Testing`) - подменяет `IClock` в тестах, чтобы управлять "текущим временем" напрямую (раздел 7).
 - **Playwright** (`tests/e2e/`) - сквозные тесты в настоящем браузере против всего стека, поднятого Aspire: вход по ссылке из письма (письмо читается из Mailpit через его HTTP API), профиль и мгновенная смена языка, тема, консультант приглашает родителя из другого часового пояса и оба видят местное время друг друга, повторное приглашение, второй способ входа через тестовый провайдер. Родительские страницы открываются в размере телефона. `pnpm test` - без окна (так же в CI), `pnpm walkthrough` - в видимом браузере с паузами, как живая демонстрация. Если AppHost не запущен, Playwright запускает его сам.
+- **how-to-test** - сценарии Playwright к конкретной задаче: `tests/e2e/how-to-test/cn-<номер>/`, запуск `pnpm how-to-test cn-<номер>` из `tests/e2e/` в видимом браузере. Их пишет Claude по навыку `.claude/skills/how-to-test`, чтобы изменение можно было увидеть своими глазами; навык `.claude/skills/build-test` выбирает, какие проверки запускать для изменённых файлов, а `REVIEW.md` - чек-лист ревью каждого pull request.
 
 Команды (из `CLAUDE.md`):
 
@@ -275,25 +293,46 @@ GitHub Actions workflow `.github/workflows/backend.yml` запускается �
 4. `dotnet build CareNest.slnx --no-restore --configuration Release` - собирает решение в конфигурации Release.
 5. `dotnet test CareNest.slnx --no-build --configuration Release` - прогоняет все тесты решения (unit, интеграционные через Testcontainers и архитектурные).
 
-`main` защищён: изменения попадают туда только через pull request с зелёным CI.
+В backend-workflow есть ещё шаг "Committed infra matches the Azure model": он заново генерирует `infra/` из модели Aspire и падает, если результат отличается от закоммиченного (раздел 11).
 
-Ещё два workflow:
+Ещё четыре workflow:
 - `.github/workflows/frontend.yml` - в `web/`: `pnpm install --frozen-lockfile`, линтер, проверка типов, тесты Vitest (включая проверку одинаковых ключей RU/EN и перевода каждого кода ошибки), сборка обоих приложений, проверка, что сборка не изменила закоммиченные `routeTree.gen.ts` (их генерирует плагин TanStack Router при сборке - расхождение означает, что дерево маршрутов забыли перегенерировать и закоммитить), и проверка, что сгенерированный клиент API совпадает с `openapi.json`. Вместе с тестом `OpenApiContractTests` в backend-workflow это даёт цепочку "код API -> openapi.json -> клиент".
 - `.github/workflows/e2e.yml` - ставит .NET, Node, pnpm и Chromium, доверяет dev-сертификату и запускает сценарии Playwright; Playwright сам поднимает весь стек через Aspire AppHost (Docker на раннерах GitHub есть). При падении отчёт Playwright прикладывается к запуску.
+- `.github/workflows/hygiene.yml` - две проверки гигиены. **gitleaks** ищет в файлах и во всей истории git то, что похоже на секреты (ключи, токены, пароли). Проверка запрещённых имён ищет в файлах, в сообщениях коммитов и в именах авторов имена, которых не должно быть в публичном репозитории; сам список лежит в секрете репозитория `FORBIDDEN_REFERENCES`, а в лог попадают только имена файлов и число совпадений, чтобы список не утёк через лог.
+- `.github/workflows/deploy.yml` - деплой в Azure после каждого merge в `main` (раздел 16); включается переменной репозитория `DEPLOY_ENABLED`.
 
-## 16. Azure (план 3, ещё не настроен и не оплачен)
+Кроме workflow:
+- **CodeQL** - статический анализ кода на уязвимости от GitHub (C#, TypeScript, сами workflow). Включён как "default setup" в настройках репозитория, отдельного файла нет; находки видны во вкладке Security.
+- **Dependabot** (`.github/dependabot.yml`) - раз в неделю открывает pull request'ы с обновлениями NuGet-, npm-пакетов и GitHub Actions, сгруппированные по экосистеме.
+- **Push protection** - GitHub отклоняет push, в котором распознал секрет, ещё до того, как он попадёт в репозиторий.
 
-Важно: то, что описано ниже, - это план, зафиксированный в спецификации, а не работающая инфраструктура. Ничего из этого раздела в репозитории пока не развёрнуто и не оплачивается.
+`main` защищён ruleset'ом `main`: изменения попадают туда только через pull request, обязательные проверки - `build-and-test`, `checks`, `smoke`, `secrets-scan`, `forbidden-references` (ветка PR должна быть актуальной относительно `main`); прямой push, force push и удаление ветки запрещены.
 
-- **Azure Container Apps** - управляемая платформа для запуска контейнеризированных приложений (serverless: не нужно вручную администрировать виртуальные машины) - здесь будет жить `CareNest.Api`.
-- **Azure Database for PostgreSQL Flexible Server** (Burstable B1ms - самый дешёвый уровень с "всплесками" производительности) - управляемый PostgreSQL: бэкапы, обновления, мониторинг берёт на себя Azure.
-- **Azure Static Web Apps** - хостинг для статических фронтенд-приложений (собранных Vite-приложений `client` и `studio`) с бесплатными preview-окружениями на каждый pull request.
-- **Key Vault** - хранилище секретов (пароли, ключи OAuth-приложений, токен Telegram-бота); Container Apps будет читать их через managed identity, без секретов в переменных окружения или в репозитории.
-- **Application Insights** (через OpenTelemetry) - сервис мониторинга и трассировки: логи, метрики и распределённые трейсы, которые локально видны в Aspire-дашборде (раздел 11), в проде будут экспортироваться сюда.
-- **Azure Communication Services Email** - управляемая отправка почты, заменяющая Mailpit в проде (раздел 12).
-- **azd** (Azure Developer CLI) - CLI-инструмент, который по декларативному описанию (сгенерированному из модели Aspire в Bicep) разворачивает и обновляет все азурные ресурсы одной командой.
+Официальная документация: https://github.com/gitleaks/gitleaks, https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning, https://docs.github.com/en/code-security/dependabot, https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations
+YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependabot tutorial`
 
-По спецификации: регион по умолчанию - EU, а вопрос соответствия 152-ФЗ (закон о персональных данных, действующий в России) для этого региона остаётся открытым. Также нужен собственный купленный домен - потому что cookie-сессии (раздел 8) требуют, чтобы `app.`, `studio.` и `api.` были поддоменами одного домена, а стандартные азурные адреса (`*.azurestaticapps.net`, `*.azurecontainerapps.io`) на одном домене не окажутся.
+## 16. Azure и деплой
+
+Продакшен работает в Azure, регион West Europe. Всё описано кодом: модель ресурсов - `src/CareNest.AppHost/AzureDeployment.cs`, сгенерированный из неё Bicep - `infra/` (раздел 11), деплой - `.github/workflows/deploy.yml`, разовая подготовка и эксплуатация - `deploy/bootstrap.sh` и `deploy/README.md`.
+
+Ресурсы:
+- **Azure Container Apps** - управляемый запуск контейнеров без администрирования виртуальных машин. Здесь живут API (одна всегда тёплая реплика, максимум две) и задание (job) `migrations`, которое применяет миграции базы.
+- **Azure Container Registry** - хранилище Docker-образов, которые собирает деплой.
+- **Azure Database for PostgreSQL Flexible Server** (Burstable B1ms, 32 ГБ, бэкапы 7 дней) - управляемый PostgreSQL; вход по паролю, чтобы приложению не нужен был Azure SDK.
+- **Azure Static Web Apps** (бесплатный тариф) - `cn-client` и `cn-studio`, статические сборки двух приложений, с бесплатными сертификатами для `app.` и `studio.`.
+- **Key Vault** - хранилище секретов: пароль базы, email администратора, логин и ключ SMTP, ключи OAuth-провайдеров, токен Telegram-бота.
+- **Application Insights + Log Analytics** - логи, метрики и трассировки, которые локально видны в Aspire-дашборде (раздел 11).
+- **Бюджет** 40 USD в месяц с письмами при 80% и 100% (создаётся один раз скриптом `deploy/bootstrap.sh`). Оценка расходов - около 31 USD в месяц: PostgreSQL ~19, Container Registry ~5, тёплая реплика API ~6, остальное почти бесплатно.
+
+**Как секреты попадают в приложение.** Секреты приложения (email администратора, SMTP, OAuth-провайдеры, Telegram, строка подключения `ConnectionStrings__carenest`) Container Apps хранит не значениями, а ссылками на секреты Key Vault (Key Vault references) и читает их управляемым удостоверением (managed identity) приложения. Исключение - дополнительные параметры подключения к базе (`CARENEST_URI`, `CARENEST_PASSWORD`), которые Aspire добавляет из `WithReference(database)`: их значения, включая пароль базы, деплой записывает прямо в секреты Container Apps API и задания `migrations` (`infra/api/api.bicep`, `infra/migrations/migrations.bicep`). Приложение получает всё это как обычные переменные окружения (`Email__Password`, `ConnectionStrings__carenest` и т.д.) и ничего не знает про Key Vault. В коде нет ни клиента Key Vault, ни другого Azure SDK (архитектурный тест, раздел 18), поэтому переезд на другой хостинг - это новая инфраструктура, а не переписывание кода. Секреты кладёт в Key Vault владелец (`bootstrap.sh` спрашивает их без вывода на экран); в репозитории и в GitHub их нет.
+
+**Как GitHub попадает в Azure.** Через OIDC (federated credentials): GitHub Actions получает короткоживущий токен, которому Azure доверяет для окружения `production` этого репозитория. Паролей и ключей Azure в GitHub нет.
+
+**`aspire deploy`.** Команда Aspire CLI, которая собирает образы, пушит их в Container Registry и применяет Bicep. Раньше для этого использовали azd (Azure Developer CLI); начиная с Aspire 13 рекомендуемый путь - `aspire deploy`, azd поддерживается только для существующих проектов. После выкладки workflow запускает задание `migrations` и ждёт его, затем выкладывает оба фронтенда. Фронтенды собираются заранее в отдельном job `build-web`: `pnpm install` и `pnpm build` выполняют чужой код (npm-пакеты), поэтому у этого job нет права `id-token` (он не может войти в Azure) и нет пароля базы; готовые `dist` он передаёт job `production` как артефакты. Пароль базы в job `production` видит только шаг `aspire deploy` (через выход шага, а не `GITHUB_ENV`). Миграции идут после новой версии API, поэтому они обязаны быть обратно совместимыми (`REVIEW.md`).
+
+**Домен.** Собственный домен с поддоменами `app.`, `studio.` и `api.`. Cookie сессии ставит `api.<домен>`, и браузер отправляет её на запросы с `app.<домен>`, потому что это один сайт (same-site). Стандартные адреса Azure (`*.azurestaticapps.net`, `*.azurecontainerapps.io`) - это другие сайты, на них вход не работает; поэтому превью-окружения Static Web Apps для pull request не используются.
+
+Регион - EU; вопрос 152-ФЗ остаётся открытым, владелец решил деплоить в Azure, сохраняя возможность переезда (раздел 5).
 
 ## 17. Фронтенд
 
@@ -359,7 +398,22 @@ YouTube (EN): `Tailwind CSS v4 crash course`, `shadcn ui tutorial`, `MSW mock se
 Официальная документация: https://vite.dev/guide/, https://react.dev/, https://tanstack.com/router/latest/docs, https://tanstack.com/query/latest/docs, https://vite-pwa-org.netlify.app/guide/
 YouTube (EN): `TanStack Router tutorial`, `TanStack Query v5 tutorial`, `vite-plugin-pwa tutorial`
 
-## 18. Что почитать и посмотреть
+## 18. API в продакшене
+
+Несколько настроек, без которых API работает локально, но ломается за балансировщиком или при перезапуске. Они не зависят от Azure: на любом хостинге за TLS-прокси работают так же.
+
+- **Forwarded headers.** В Azure Container Apps HTTPS заканчивается на входном прокси (ingress), а в контейнер запрос приходит по обычному http. Без `UseForwardedHeaders` API считал бы, что запрос пришёл по http, и, например, отдавал бы Google адрес возврата `http://...`, который провайдер отвергает. Прокси сообщает исходную схему и адрес клиента в заголовках `X-Forwarded-Proto` и `X-Forwarded-For`; `src/CareNest.Api/Program.cs` им доверяет, потому что снаружи к контейнеру можно попасть только через ingress. Заголовок `Host` от прокси не принимается, чтобы его нельзя было подменить. Middleware должен отработать ровно один раз: каждый проход снимает одну, самую правую, запись `X-Forwarded-For`. Ingress дописывает настоящий адрес клиента справа, всё левее пишет сам клиент. В Azure Aspire задаёт переменную `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, и тогда хост ASP.NET Core сам запускает этот middleware; поэтому `Program.cs` вызывает `UseForwardedHeaders` только когда переменная не задана (любой другой хостинг за TLS-прокси). Второй проход взял бы запись, которую написал клиент, и клиент мог бы выдать себя за любой адрес и обойти лимит по IP (тест `ProductionHostingTests`).
+- **Ключи Data Protection в базе.** ASP.NET Core шифрует cookie сессии и состояние OAuth ключами Data Protection. По умолчанию ключи живут в файловой системе контейнера и пропадают при каждом перезапуске - всех бы разлогинивало. У нас ключи лежат в таблице `identity.data_protection_keys` (пакет `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`) и общие для всех реплик. У Container Apps есть своё хранилище ключей, и Aspire его включает, но явно настроенное хранилище приложения имеет приоритет (проверено по исходникам ASP.NET Core 10), так что источник один - база.
+- **`/alive`.** Проверка "процесс жив": Container Apps вызывает её каждые несколько секунд и при сбоях перезапускает контейнер. Отвечает только `Healthy`, поэтому открыта везде; подробный `/health` - только в Development.
+- **Ограничение частоты (rate limiting).** Встроенный в ASP.NET Core `RateLimiter`: с одного IP-адреса (это адрес, который дописал ingress, см. Forwarded headers выше) можно запросить не больше 20 писем для входа за 10 минут (`Identity:EmailStartsPerAddressWindow`). Счётчик живёт в памяти каждой реплики API, поэтому при двух репликах фактический потолок - до 40 писем; это приемлемо, потому что API работает не более чем в двух репликах. Сверх этого API отвечает 429 с кодом `rate_limited`, который интерфейс переводит. Это дополнение к лимиту в 3 письма на один email: тот защищает конкретный ящик, этот - почтовый сервис от перебора адресов.
+- **Проверка конфигурации при старте.** Если `Frontend:Origins` или `Frontend:ClientAppUrl` пустые или не абсолютные адреса, API не стартует (`ValidateOnStart`), а не ломает молча CORS и ссылки в письмах.
+- **Тестовый вход только локально.** Тестовый провайдер входа разрешён только в окружениях `Development` и `Testing`; в любом другом (Production, Staging) API с ним не стартует.
+- **Application Insights.** Экспортер Azure Monitor подключён в `CareNest.ServiceDefaults` и включается, только если задана переменная `APPLICATIONINSIGHTS_CONNECTION_STRING` (её задаёт деплой в Azure). Архитектурный тест следит, чтобы модули, SharedKernel и API не использовали Azure SDK: переезд на другой хостинг - это смена конфигурации, а не кода.
+
+Официальная документация: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer, https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers
+YouTube (EN): `ASP.NET Core data protection keys explained`
+
+## 19. Что почитать и посмотреть
 
 **.NET 10 / ASP.NET Core / Minimal API**
 - https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis
@@ -415,16 +469,17 @@ YouTube (EN): `TanStack Router tutorial`, `TanStack Query v5 tutorial`, `vite-pl
 - YouTube (RU): `Testcontainers .NET интеграционные тесты`
 - YouTube (EN): `Testcontainers dotnet integration testing`
 
-**Azure (план 3)**
+**Azure и деплой**
+- Aspire: деплой в Azure: https://aspire.dev/deployment/azure/
 - Container Apps: https://learn.microsoft.com/en-us/azure/container-apps/overview
 - Azure Database for PostgreSQL Flexible Server: https://learn.microsoft.com/en-us/azure/postgresql/overview
 - Static Web Apps: https://learn.microsoft.com/en-us/azure/static-web-apps/overview
-- Key Vault: https://learn.microsoft.com/en-us/azure/key-vault/general/overview
+- Key Vault references в Container Apps: https://learn.microsoft.com/en-us/azure/container-apps/manage-secrets
 - Application Insights + OpenTelemetry: https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview
-- Azure Communication Services Email: https://learn.microsoft.com/en-us/azure/communication-services/concepts/email/email-overview
-- Azure Developer CLI (azd): https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/overview
+- GitHub Actions + Azure OIDC: https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect
+- Brevo SMTP: https://developers.brevo.com/docs/smtp-integration
 - YouTube (RU): `Azure Container Apps обзор`
-- YouTube (EN): `Azure Developer CLI azd tutorial`
+- YouTube (EN): `.NET Aspire deploy to Azure Container Apps`, `GitHub Actions OIDC Azure login`
 
 **Фронтенд**
 - https://pnpm.io/workspaces

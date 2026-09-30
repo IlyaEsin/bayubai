@@ -24,5 +24,6 @@ export const ErrorCode = {
   identitymagic_link_used: 'identity.magic_link_used',
   identitynot_signed_in: 'identity.not_signed_in',
   identityprovider_unavailable: 'identity.provider_unavailable',
+  rate_limited: 'rate_limited',
   validation_failed: 'validation_failed',
 } as const;
