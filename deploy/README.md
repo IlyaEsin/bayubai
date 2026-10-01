@@ -47,6 +47,15 @@ The two database passwords are Container Apps secrets written by the deploy, not
 
 The GitHub Actions identity `bayubai-deploy` has Contributor on the subscription and Key Vault Secrets User on the vault. Its Role Based Access Control Administrator role on `rg-bayubai` carries a condition: it may only assign or remove Key Vault Secrets User and AcrPull, the two roles the template gives the app identities. A template that needs another role fails at deploy; widen the condition in `bootstrap.sh` and re-run it.
 
+## Public site
+
+`bayubai.com` serves `site/` from Cloudflare Pages, not Azure. Every merge to `main` publishes it; there is no build step.
+
+One-time setup:
+1. Cloudflare → Workers & Pages → Create → Pages → Connect to Git → `IlyaEsin/bayubai`.
+2. Project name `bayubai-site`, production branch `main`, framework preset None, build command empty, build output directory `site`.
+3. Custom domains → add `bayubai.com` (and `www.bayubai.com` if wanted); Cloudflare creates the DNS records.
+
 ## First-time setup
 
 1. Buy the domain, create the Azure subscription, sign in with `az login` and `gh auth login`.
