@@ -34,6 +34,15 @@ Production runs on Azure (West Europe). A merge to `main` deploys through `.gith
 
 Set or rotate one: `az keyvault secret set --vault-name <vault> --name <secret> --value "<value>"`, then restart the API revision so it re-reads references: `az containerapp revision restart --name api --resource-group rg-bayubai --revision $(az containerapp show --name api --resource-group rg-bayubai --query properties.latestRevisionName --output tsv)`.
 
+## Public site
+
+`bayubai.com` serves `site/` from Cloudflare Pages, not Azure. Every merge to `main` publishes it; there is no build step.
+
+One-time setup:
+1. Cloudflare → Workers & Pages → Create → Pages → Connect to Git → `IlyaEsin/bayubai`.
+2. Project name `bayubai-site`, production branch `main`, framework preset None, build command empty, build output directory `site`.
+3. Custom domains → add `bayubai.com` (and `www.bayubai.com` if wanted); Cloudflare creates the DNS records.
+
 ## First-time setup
 
 1. Buy the domain, create the Azure subscription, sign in with `az login` and `gh auth login`.
