@@ -198,17 +198,23 @@ else
 
 ```csharp
 var postgres = builder.AddPostgres("postgres").WithDataVolume();
-var database = postgres.AddDatabase("bayubai");
+var database = postgres.AddDatabase(DatabaseAccess.Database);
+var appRolePassword = builder.AddParameter(
+    "postgres-app-password", new GenerateParameterDefault { MinLength = 22, Special = false }, secret: true, persist: true);
 // Fixed ports so Playwright can read the inbox at a known address.
 var email = builder.AddMailPit("email", httpPort: 8025, smtpPort: 1025);
 
 var migrations = builder.AddProject<Projects.Bayubai_MigrationService>("migrations")
     .WithReference(database)
+    .WithAppRoleSetup(appRolePassword)
     .WaitFor(database);
 
 // Local demo and e2e only: a one-click test sign-in and a known admin; index 99 leaves user-secrets admins at 0 untouched.
 var api = builder.AddProject<Projects.Bayubai_Api>("api")
-    .WithReference(database)
+    .WithEnvironment(
+        $"ConnectionStrings__{DatabaseAccess.Database}",
+        ReferenceExpression.Create(
+            $"Host={postgres.Resource.Host};Port={postgres.Resource.Port};Database={DatabaseAccess.Database};Username={DatabaseAccess.AppRole};Password={appRolePassword}"))
     .WithReference(email)
     .WaitFor(database)
     .WaitForCompletion(migrations)
@@ -320,15 +326,17 @@ YouTube (EN): `gitleaks GitHub Actions`, `GitHub CodeQL default setup`, `Dependa
 - **Azure Container Registry** - хранилище Docker-образов, которые собирает деплой.
 - **Azure Database for PostgreSQL Flexible Server** (Burstable B1ms, 32 ГБ, бэкапы 7 дней) - управляемый PostgreSQL; вход по паролю, чтобы приложению не нужен был Azure SDK.
 - **Azure Static Web Apps** (бесплатный тариф) - `bb-client` и `bb-studio`, статические сборки двух приложений, с бесплатными сертификатами для `app.` и `studio.`.
-- **Key Vault** (`kv-bayubai-<6 hex>`, имя печатает `bootstrap.sh`) - хранилище секретов: пароль базы, email администратора, логин и ключ SMTP, ключи OAuth-провайдеров, токен Telegram-бота.
+- **Key Vault** (`kv-bayubai-<6 hex>`, имя печатает `bootstrap.sh`) - хранилище секретов: пароли базы (администратора и роли приложения), email администратора, логин и ключ SMTP, ключи OAuth-провайдеров, токен Telegram-бота.
 - **Application Insights + Log Analytics** - логи, метрики и трассировки, которые локально видны в Aspire-дашборде (раздел 11).
 - **Бюджет** 40 USD в месяц с письмами при 80% и 100% (создаётся один раз скриптом `deploy/bootstrap.sh`). Оценка расходов - около 31 USD в месяц: PostgreSQL ~19, Container Registry ~5, тёплая реплика API ~6, остальное почти бесплатно.
 
-**Как секреты попадают в приложение.** Секреты приложения (email администратора, SMTP, OAuth-провайдеры, Telegram, строка подключения `ConnectionStrings__bayubai`) Container Apps хранит не значениями, а ссылками на секреты Key Vault (Key Vault references) и читает их управляемым удостоверением (managed identity) приложения. Исключение - дополнительные параметры подключения к базе (`BAYUBAI_URI`, `BAYUBAI_PASSWORD`), которые Aspire добавляет из `WithReference(database)`: их значения, включая пароль базы, деплой записывает прямо в секреты Container Apps API и задания `migrations` (`infra/api/api.bicep`, `infra/migrations/migrations.bicep`). Приложение получает всё это как обычные переменные окружения (`Email__Password`, `ConnectionStrings__bayubai` и т.д.) и ничего не знает про Key Vault. В коде нет ни клиента Key Vault, ни другого Azure SDK (архитектурный тест, раздел 18), поэтому переезд на другой хостинг - это новая инфраструктура, а не переписывание кода. Секреты кладёт в Key Vault владелец (`bootstrap.sh` спрашивает их без вывода на экран); в репозитории и в GitHub их нет.
+**Как секреты попадают в приложение.** Секреты приложения (email администратора, SMTP, OAuth-провайдеры, Telegram) Container Apps хранит не значениями, а ссылками на секреты Key Vault (Key Vault references) и читает их управляемым удостоверением (managed identity) приложения. Исключение - строка подключения к базе `ConnectionStrings__bayubai`: модель собирает её сама, а деплой записывает её значение, включая пароль, прямо в секреты Container Apps (`infra/api/api.bicep`, `infra/migrations/migrations.bicep`). Приложение получает всё это как обычные переменные окружения (`Email__Password`, `ConnectionStrings__bayubai` и т.д.) и ничего не знает про Key Vault. В коде нет ни клиента Key Vault, ни другого Azure SDK (архитектурный тест, раздел 18), поэтому переезд на другой хостинг - это новая инфраструктура, а не переписывание кода. Секреты кладёт в Key Vault владелец (`bootstrap.sh` спрашивает их без вывода на экран); в репозитории и в GitHub их нет.
 
-**Как GitHub попадает в Azure.** Через OIDC (federated credentials): GitHub Actions получает короткоживущий токен, которому Azure доверяет для окружения `production` этого репозитория. Паролей и ключей Azure в GitHub нет.
+**Роли в базе.** Задание `migrations` входит администратором сервера: применяет миграции и создаёт (или обновляет) роль `bayubai_app` с правами только на чтение и запись строк в схемах модулей (`PostgresAccess` в `Bayubai.SharedKernel`). API входит как `bayubai_app` и пароля администратора не знает, поэтому ошибка в API не может изменить или удалить схему. Локальный AppHost и интеграционные тесты запускают API так же, поэтому забытый grant ломает тесты, а не прод. Пароль роли - отдельный секрет `postgres-app-password`. Обе строки подключения в проде используют `SSL Mode=VerifyFull`: Npgsql проверяет, что сертификат сервера выпущен доверенным центром и выдан на это имя хоста.
 
-**`aspire deploy`.** Команда Aspire CLI, которая собирает образы, пушит их в Container Registry и применяет Bicep. Раньше для этого использовали azd (Azure Developer CLI); начиная с Aspire 13 рекомендуемый путь - `aspire deploy`, azd поддерживается только для существующих проектов. После выкладки workflow запускает задание `migrations` и ждёт его, затем выкладывает оба фронтенда. Фронтенды собираются заранее в отдельном job `build-web`: `pnpm install` и `pnpm build` выполняют чужой код (npm-пакеты), поэтому у этого job нет права `id-token` (он не может войти в Azure) и нет пароля базы; готовые `dist` он передаёт job `production` как артефакты. Пароль базы в job `production` видит только шаг `aspire deploy` (через выход шага, а не `GITHUB_ENV`). Миграции идут после новой версии API, поэтому они обязаны быть обратно совместимыми (`REVIEW.md`).
+**Как GitHub попадает в Azure.** Через OIDC (federated credentials): GitHub Actions получает короткоживущий токен, которому Azure доверяет для окружения `production` этого репозитория. Паролей и ключей Azure в GitHub нет. Роль "Role Based Access Control Administrator" у удостоверения деплоя ограничена условием (constrained delegation): оно может выдавать и снимать только роли Key Vault Secrets User и AcrPull, которые шаблон назначает приложениям.
+
+**`aspire deploy`.** Команда Aspire CLI, которая собирает образы, пушит их в Container Registry и применяет Bicep. Раньше для этого использовали azd (Azure Developer CLI); начиная с Aspire 13 рекомендуемый путь - `aspire deploy`, azd поддерживается только для существующих проектов. После выкладки workflow запускает задание `migrations` и ждёт его, затем выкладывает оба фронтенда. Фронтенды собираются заранее в отдельном job `build-web`: `pnpm install` и `pnpm build` выполняют чужой код (npm-пакеты), поэтому у этого job нет права `id-token` (он не может войти в Azure) и нет пароля базы; готовые `dist` он передаёт job `production` как артефакты. Пароли базы в job `production` видит только шаг `aspire deploy` (через выход шага, а не `GITHUB_ENV`). Миграции идут после новой версии API, поэтому они обязаны быть обратно совместимыми (`REVIEW.md`).
 
 **Домен.** Собственный домен с поддоменами `app.`, `studio.` и `api.`. Cookie сессии ставит `api.<домен>`, и браузер отправляет её на запросы с `app.<домен>`, потому что это один сайт (same-site). Стандартные адреса Azure (`*.azurestaticapps.net`, `*.azurecontainerapps.io`) - это другие сайты, на них вход не работает; поэтому превью-окружения Static Web Apps для pull request не используются.
 
