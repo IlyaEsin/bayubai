@@ -11,18 +11,16 @@ param api_identity_outputs_id string
 
 param api_containerport string
 
-param key_vault string
-
 param postgres_outputs_hostname string
 
-param postgres_user_value string
-
 @secure()
-param postgres_password_value string
+param postgres_app_password_value string
 
 param insights_outputs_appinsightsconnectionstring string
 
 param domain_value string
+
+param key_vault string
 
 param api_identity_outputs_clientid string
 
@@ -32,11 +30,6 @@ param bb_outputs_azure_container_registry_managed_identity_id string
 
 resource secrets 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: key_vault
-}
-
-resource secrets_connectionstrings__bayubai 'Microsoft.KeyVault/vaults/secrets@2024-11-01' existing = {
-  name: 'connectionstrings--bayubai'
-  parent: secrets
 }
 
 resource secrets_admin_email 'Microsoft.KeyVault/vaults/secrets@2024-11-01' existing = {
@@ -62,16 +55,7 @@ resource api 'Microsoft.App/containerApps@2025-10-02-preview' = {
       secrets: [
         {
           name: 'connectionstrings--bayubai'
-          identity: api_identity_outputs_id
-          keyVaultUrl: secrets_connectionstrings__bayubai.properties.secretUri
-        }
-        {
-          name: 'bayubai-uri'
-          value: 'postgresql://${uriComponent(postgres_user_value)}:${uriComponent(postgres_password_value)}@${postgres_outputs_hostname}/bayubai'
-        }
-        {
-          name: 'bayubai-password'
-          value: postgres_password_value
+          value: 'Host=${postgres_outputs_hostname};Database=bayubai;Username=bayubai_app;Password=${postgres_app_password_value};SSL Mode=VerifyFull'
         }
         {
           name: 'identity--adminemails--0'
@@ -144,34 +128,6 @@ resource api 'Microsoft.App/containerApps@2025-10-02-preview' = {
             {
               name: 'ConnectionStrings__bayubai'
               secretRef: 'connectionstrings--bayubai'
-            }
-            {
-              name: 'BAYUBAI_HOST'
-              value: postgres_outputs_hostname
-            }
-            {
-              name: 'BAYUBAI_PORT'
-              value: '5432'
-            }
-            {
-              name: 'BAYUBAI_URI'
-              secretRef: 'bayubai-uri'
-            }
-            {
-              name: 'BAYUBAI_JDBCCONNECTIONSTRING'
-              value: 'jdbc:postgresql://${postgres_outputs_hostname}/bayubai?sslmode=require&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin'
-            }
-            {
-              name: 'BAYUBAI_USERNAME'
-              value: postgres_user_value
-            }
-            {
-              name: 'BAYUBAI_PASSWORD'
-              secretRef: 'bayubai-password'
-            }
-            {
-              name: 'BAYUBAI_DATABASENAME'
-              value: 'bayubai'
             }
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

@@ -5,17 +5,23 @@ internal static class LocalStack
     public static void AddLocalStack(this IDistributedApplicationBuilder builder)
     {
         var postgres = builder.AddPostgres("postgres").WithDataVolume();
-        var database = postgres.AddDatabase("bayubai");
+        var database = postgres.AddDatabase(DatabaseAccess.Database);
+        var appRolePassword = builder.AddParameter(
+            "postgres-app-password", new GenerateParameterDefault { MinLength = 22, Special = false }, secret: true, persist: true);
         // Fixed ports so Playwright can read the inbox at a known address.
         var email = builder.AddMailPit("email", httpPort: 8025, smtpPort: 1025);
 
         var migrations = builder.AddProject<Projects.Bayubai_MigrationService>("migrations")
             .WithReference(database)
+            .WithAppRoleSetup(appRolePassword)
             .WaitFor(database);
 
         // Local demo and e2e only: a one-click test sign-in and a known admin; index 99 leaves user-secrets admins at 0 untouched.
         var api = builder.AddProject<Projects.Bayubai_Api>("api")
-            .WithReference(database)
+            .WithEnvironment(
+                $"ConnectionStrings__{DatabaseAccess.Database}",
+                ReferenceExpression.Create(
+                    $"Host={postgres.Resource.Host};Port={postgres.Resource.Port};Database={DatabaseAccess.Database};Username={DatabaseAccess.AppRole};Password={appRolePassword}"))
             .WithReference(email)
             .WaitFor(database)
             .WaitForCompletion(migrations)

@@ -89,20 +89,23 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      # The password lives only in Key Vault and leaves this step as an output, not GITHUB_ENV, so only the deploy step sees it.
-      - name: Read the database password
+      # The passwords live only in Key Vault and leave this step as outputs, not GITHUB_ENV, so only the deploy step sees them.
+      - name: Read the database passwords
         id: postgres
         run: |
-          password=$(az keyvault secret show --vault-name "$Deploy__KeyVault" --name postgres-password --query value --output tsv)
-          echo "::add-mask::$password"
-          echo "password=$password" >> "$GITHUB_OUTPUT"
+          for name in postgres-password postgres-app-password; do
+            password=$(az keyvault secret show --vault-name "$Deploy__KeyVault" --name "$name" --query value --output tsv)
+            echo "::add-mask::$password"
+            echo "$name=$password" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Every Key Vault secret the templates reference exists
         run: bash deploy/check-secrets.sh "$Deploy__KeyVault"
 
       - name: Deploy the API, the migrations job and Azure resources
         env:
-          Deploy__PostgresPassword: ${{ steps.postgres.outputs.password }}
+          Deploy__PostgresPassword: ${{ steps.postgres.outputs.postgres-password }}
+          Deploy__PostgresAppPassword: ${{ steps.postgres.outputs.postgres-app-password }}
         run: |
           az bicep install
           dotnet tool restore

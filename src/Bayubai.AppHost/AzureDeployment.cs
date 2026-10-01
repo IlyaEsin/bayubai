@@ -13,23 +13,29 @@ internal static class AzureDeployment
         // Fixed, because a generated default would change on every publish and Azure cannot rename the server admin.
         var postgresUser = builder.AddParameter("postgres-user", "bayubai", publishValueAsDefault: true);
         var postgresPassword = builder.AddParameterFromConfiguration("postgres-password", "Deploy:PostgresPassword", secret: true);
+        var appRolePassword = builder.AddParameterFromConfiguration("postgres-app-password", "Deploy:PostgresAppPassword", secret: true);
 
         // The hosted Aspire dashboard would be another public surface and cost; Application Insights covers production.
         builder.AddAzureContainerAppEnvironment("bb").WithDashboard(false);
         var vault = builder.AddAzureKeyVault("secrets").PublishAsExisting(vaultName, null);
         var insights = builder.AddAzureApplicationInsights("insights");
-        var database = builder.AddAzurePostgresFlexibleServer("postgres")
-            .WithPasswordAuthentication(vault, postgresUser, postgresPassword)
-            .AddDatabase("bayubai");
+        var postgres = builder.AddAzurePostgresFlexibleServer("postgres")
+            .WithPasswordAuthentication(vault, postgresUser, postgresPassword);
+        postgres.AddDatabase(DatabaseAccess.Database);
+
+        // Written out instead of WithReference so the API gets only its own role and both verify the server certificate against the host name.
+        ReferenceExpression ConnectionString(ReferenceExpression user, IResourceBuilder<ParameterResource> password) => ReferenceExpression.Create(
+            $"Host={postgres.Resource.HostName};Database={DatabaseAccess.Database};Username={user};Password={password};SSL Mode=VerifyFull");
 
         builder.AddProject<Projects.Bayubai_MigrationService>("migrations")
-            .WithReference(database)
+            .WithEnvironment($"ConnectionStrings__{DatabaseAccess.Database}", ConnectionString(ReferenceExpression.Create($"{postgresUser}"), postgresPassword))
+            .WithAppRoleSetup(appRolePassword)
             .WithReference(insights)
             .PublishAsAzureContainerAppJob();
 
         var api = builder.AddProject<Projects.Bayubai_Api>("api")
             .WithExternalHttpEndpoints()
-            .WithReference(database)
+            .WithEnvironment($"ConnectionStrings__{DatabaseAccess.Database}", ConnectionString(ReferenceExpression.Create($"{DatabaseAccess.AppRole}"), appRolePassword))
             .WithReference(insights)
             .WithEnvironment("Frontend__Origins__0", ReferenceExpression.Create($"https://app.{domain}"))
             .WithEnvironment("Frontend__Origins__1", ReferenceExpression.Create($"https://studio.{domain}"))
