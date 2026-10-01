@@ -32,7 +32,7 @@ Bayubai (Russian: Баюбай) is a platform that automates an independent cons
 - Each module owns one PostgreSQL schema and one DbContext with its own migrations.
 - Migrations never run at API startup: `Bayubai.MigrationService` applies them locally, a deploy step applies them in production.
 - `src/Bayubai.AppHost`: `LocalStack.cs` is the local run, `AzureDeployment.cs` the production model; `infra/` is its generated Bicep (never edit by hand); `deploy/` holds the bootstrap and deploy scripts.
-- `site/` is the public page at `bayubai.com`, served by Cloudflare Pages from `main` (no build step).
+- `site/` is the public page at `bayubai.com`, served by the Cloudflare Worker `bayubai-site`, deployed from `main` (no build step; `deploy/README.md`).
 - `web/packages/api-client` is generated from `openapi.json` (never edit `src/generated/`), `web/packages/i18n` holds every UI string, `web/packages/ui` holds shared components and flows; `web/apps/client` (parent PWA) and `web/apps/studio` (consultant and admin) hold routes and app-specific screens only.
 
 ## Standing rules (checked in review)

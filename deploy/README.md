@@ -49,12 +49,13 @@ The GitHub Actions identity `bayubai-deploy` has Contributor on the subscription
 
 ## Public site
 
-`bayubai.com` serves `site/` from Cloudflare Pages, not Azure. Every merge to `main` publishes it; there is no build step.
+`bayubai.com` serves `site/` from a Cloudflare Worker with static assets (`bayubai-site`), not Azure. Workers Builds deploys every merge to `main`; there is no build step and no GitHub workflow.
 
 One-time setup:
-1. Cloudflare → Workers & Pages → Create → Pages → Connect to Git → `IlyaEsin/bayubai`.
-2. Project name `bayubai-site`, production branch `main`, framework preset None, build command empty, build output directory `site`.
-3. Custom domains → add `bayubai.com` (and `www.bayubai.com` if wanted); Cloudflare creates the DNS records.
+1. Cloudflare → Workers & Pages → Create → import the Git repository `IlyaEsin/bayubai`, project name `bayubai-site`.
+2. Build command empty; deploy command `npx wrangler deploy --assets=./site --name bayubai-site --compatibility-date=2026-09-30`; preview builds off.
+3. `bayubai-site` → Settings → Domains & Routes → Add → Custom domain → `bayubai.com`; Cloudflare creates the DNS record and certificate.
+4. Zone `bayubai.com` → SSL/TLS → Edge Certificates → Always Use HTTPS on.
 
 ## First-time setup
 
