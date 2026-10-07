@@ -66,7 +66,11 @@ public class ProductionHostingTests(ApiFactory factory)
 
         (await StartAsync()).StatusCode.ShouldBe(HttpStatusCode.Accepted);
         (await StartAsync()).StatusCode.ShouldBe(HttpStatusCode.Accepted);
-        await (await StartAsync()).ShouldBeProblemAsync(HttpStatusCode.TooManyRequests, "rate_limited");
+        var rejected = await StartAsync();
+        await rejected.ShouldBeProblemAsync(HttpStatusCode.TooManyRequests, "rate_limited");
+        // The window is ten minutes, so the client is told to wait at most that long.
+        rejected.Headers.RetryAfter?.Delta.ShouldNotBeNull();
+        rejected.Headers.RetryAfter!.Delta!.Value.ShouldBeInRange(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(10));
     }
 
     [Fact]

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Threading.RateLimiting;
 using Bayubai.Api;
 using Bayubai.Identity;
 using Bayubai.SharedKernel.Errors;
@@ -27,7 +29,16 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.OnRejected = (context, _) => new ValueTask(CommonErrors.TooManyRequests.ToProblem().ExecuteAsync(context.HttpContext));
+    options.OnRejected = (context, _) =>
+    {
+        // Tells a client how long to wait instead of letting it retry into the same closed window.
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+        }
+
+        return new ValueTask(CommonErrors.TooManyRequests.ToProblem().ExecuteAsync(context.HttpContext));
+    };
 });
 builder.AddIdentityModule();
 

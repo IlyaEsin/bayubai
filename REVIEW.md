@@ -28,6 +28,7 @@ Checked on every pull request, by a person or by Claude. A "no" needs a fix or a
 - [ ] A change to the AppHost's Azure model regenerated `infra/`; the `infra/` diff is what was intended.
 - [ ] A new secret is in Key Vault before the PR that references it (`deploy/README.md`); no secret in code, config or workflow files.
 - [ ] Cookies stay `HttpOnly`, `Secure`, `SameSite=Lax`; CORS origins come from `Frontend:Origins` only.
+- [ ] Every `uses:` in a workflow is pinned to a full commit SHA with the version in a comment (`@<sha> # v4.4.0`); Dependabot keeps both up to date.
 
 ## Docs
 
