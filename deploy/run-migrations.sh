@@ -10,8 +10,9 @@ execution=$(tsv az containerapp job start --name migrations --resource-group "$r
 echo "Started migrations execution $execution"
 
 for _ in $(seq 1 60); do
+  # A failed poll (throttling, a network blip) counts as "not finished yet"; the loop's own limit still ends the wait.
   status=$(tsv az containerapp job execution show --name migrations --resource-group "$resource_group" \
-    --job-execution-name "$execution" --query properties.status --output tsv)
+    --job-execution-name "$execution" --query properties.status --output tsv) || status="unknown"
   case "$status" in
     Succeeded) echo "Migrations applied"; exit 0 ;;
     Failed | Stopped | Degraded) echo "Migrations execution ended as $status; see its logs in Log Analytics"; exit 1 ;;
