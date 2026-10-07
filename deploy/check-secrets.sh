@@ -16,6 +16,6 @@ for name in $names; do
 done
 
 if [ "$missing" -eq 0 ]; then
-  echo "All referenced secrets exist: $(echo $names | tr ' ' ',')"
+  echo "All referenced secrets exist: $(printf '%s\n' "$names" | paste -sd, -)"
 fi
 exit "$missing"
