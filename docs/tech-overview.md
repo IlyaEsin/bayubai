@@ -309,7 +309,7 @@ GitHub Actions workflow `.github/workflows/backend.yml` запускается �
 
 Кроме workflow:
 - **CodeQL** - статический анализ кода на уязвимости от GitHub (C#, TypeScript, сами workflow). Включён как "default setup" в настройках репозитория, отдельного файла нет; находки видны во вкладке Security.
-- **Dependabot** (`.github/dependabot.yml`) - раз в неделю открывает pull request'ы с обновлениями NuGet-, npm-пакетов и GitHub Actions, сгруппированные по экосистеме.
+- **Dependabot** (`.github/dependabot.yml`) - раз в неделю открывает pull request'ы с обновлениями NuGet-, npm-пакетов и GitHub Actions, сгруппированные по экосистеме. Все GitHub Actions в workflow закреплены по полному SHA коммита с версией в комментарии (`@<sha> # v4.4.0`): перемещённый или взломанный тег не изменит то, что запускается в CI и в деплое; Dependabot обновляет SHA и комментарий вместе.
 - **Push protection** - GitHub отклоняет push, в котором распознал секрет, ещё до того, как он попадёт в репозиторий.
 
 `main` защищён ruleset'ом `main`: изменения попадают туда только через pull request, обязательные проверки - `build-and-test`, `checks`, `smoke`, `secrets-scan`, `forbidden-references` (ветка PR должна быть актуальной относительно `main`); прямой push, force push и удаление ветки запрещены.
