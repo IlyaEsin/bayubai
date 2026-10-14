@@ -10,8 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "i18next": "26.4.2",
-    "react-i18next": "17.0.15"
+    "i18next": "26.4.3",
+    "react-i18next": "17.0.16"
   },
   "devDependencies": {
     "@bayubai/api-client": "workspace:*"
