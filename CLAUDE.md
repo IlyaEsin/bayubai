@@ -24,6 +24,23 @@ Bayubai (Russian: Баюбай) is a platform that automates an independent cons
 - New Identity migration: `dotnet ef migrations add <Name> --project src/Modules/Bayubai.Identity --output-dir Persistence/Migrations --namespace Bayubai.Identity.Persistence.Migrations`
 - Try the API in a browser (Development): `<api>/scalar`; scripted scenario: `src/Bayubai.Api/Bayubai.Api.http`
 
+## Risk tiers
+
+- High risk: personal data of parents and children, consultant data isolation (`IConsultantOwned`, query filters), account deletion, sign-in and permissions, secrets and deploy.
+
+## Branches
+
+- Issue prefix: bb
+- Pattern: feature/bb-<n>-<slug>
+
+## Public or private
+
+Public repository (an engineering portfolio). Nothing about the owner's employer, other clients or real parents and children goes into it, its issues or its PRs; the forbidden names live outside the repo (`FORBIDDEN_REFERENCES`, checked in CI).
+
+## How to test
+
+`pnpm how-to-test bb-<n>` from `tests/e2e/` (skill `how-to-test` in this repo).
+
 ## Layout and module boundaries
 
 - `src/Bayubai.Api` is the host only: startup, middleware, module registration. No business logic.
