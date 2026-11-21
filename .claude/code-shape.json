@@ -1,0 +1,36 @@
+[
+  {
+    "id": "nodatime",
+    "pattern": "\\bDateTime(Offset)?\\b",
+    "files": "^src/(Modules|Bayubai\\.SharedKernel)/(?!.*/Migrations/).*\\.cs$",
+    "stripComments": true,
+    "message": "CLAUDE.md rule 2: NodaTime only in domain and persistence code"
+  },
+  {
+    "id": "ignore-query-filters",
+    "pattern": "\\.IgnoreQueryFilters\\s*\\(",
+    "files": "^src/.*\\.cs$",
+    "unless": "//",
+    "unlessAbove": "^\\s*//",
+    "message": "CLAUDE.md rule 1: IgnoreQueryFilters() needs a comment saying why the query is safe"
+  },
+  {
+    "id": "personal-data-in-log",
+    "pattern": "^(?=.*(Log(Trace|Debug|Information|Warning|Error|Critical)?\\s*\\(|LoggerMessage|Message\\s*=))(?=.*\\{(Email|E?Mail\\w*|Name|FirstName|LastName|FullName|DisplayName|Phone\\w*|ChildName|Address|BirthDate|DateOfBirth)\\})",
+    "flags": "i",
+    "files": "\\.cs$",
+    "message": "CLAUDE.md rule 4: log ids only, never personal data"
+  },
+  {
+    "id": "error-text",
+    "pattern": "\\bApiError\\s*\\(\\s*\"[^\"]*\\s[^\"]*\"|\\bDetail\\s*=\\s*\\$?\"",
+    "files": "\\.cs$",
+    "message": "CLAUDE.md rule 3: the API returns stable codes, never human-readable text"
+  },
+  {
+    "id": "ui-text",
+    "pattern": "(>\\s*[A-Za-zА-Яа-яЁё][^<>{}]*\\s*<)|(\\b(placeholder|title|aria-label|alt|label)=[\"'][A-Za-zА-Яа-яЁё][^\"']*[\"'])",
+    "files": "^web/(apps|packages/ui)/(?!.*\\.test\\.tsx$).*\\.tsx$",
+    "message": "CLAUDE.md rule 3: no UI text outside web/packages/i18n"
+  }
+]
